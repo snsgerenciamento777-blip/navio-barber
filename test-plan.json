@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "strategy": "economy",
+  "workers": [
+    {
+      "id": "worker-1",
+      "provider": "claude",
+      "mode": "write",
+      "cwd": ".",
+      "task": "Create a simple README.md file with project overview for Navio Barber 2.0"
+    }
+  ]
+}

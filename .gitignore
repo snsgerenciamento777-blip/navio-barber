@@ -128,9 +128,11 @@ dist
 # Stores VSCode versions used for testing VSCode extensions
 .vscode-test
 
-# yarn v2
-.yarn/cache
-.yarn/unplugged
-.yarn/build-state.yml
-.yarn/install-state.gz
-.pnp.*
+# Playwright E2E
+test-results/
+playwright-report/
+tests/e2e/.auth/
+tests/e2e/storage-state*.json
+
+# Turbo cache
+.turbo/

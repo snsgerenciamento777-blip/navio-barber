@@ -1,0 +1,16 @@
+{
+  "name": "@navio-barber/auth",
+  "version": "2.0.0-alpha.1",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "dependencies": {
+    "@better-auth/prisma-adapter": "^1.7.18",
+    "@navio-barber/database": "file:../packages/database",
+    "better-auth": "^1.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}

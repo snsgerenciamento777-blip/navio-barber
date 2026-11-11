@@ -1,0 +1,262 @@
+// Prisma Schema — Navio Barber 2.0 MVP
+// Baseado em docs/specs/ARQUITETURA_TECNICA.md (seção 4.2)
+// Fase 0 — Spec Kit (especificação apenas, sem implementação)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  phone     String?
+  passwordHash String @map("password_hash")
+  name      String
+  role      Role     @default(BARBER)
+  imageUrl  String?  @map("image_url")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  shops           Shop[]
+  professionals   Professional[]
+  fcmTokens       FCMToken[]
+  notifications   Notification[]
+
+  @@map("users")
+}
+
+model Shop {
+  id        String   @id @default(uuid())
+  name      String
+  address   String?
+  phone     String?
+  email     String?
+  logoUrl   String?  @map("logo_url")
+  category  String?
+  ownerId   String   @map("owner_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  owner        User       @relation(fields: [ownerId], references: [id])
+  professionals Professional[]
+  services      Service[]
+  customers     Customer[]
+  appointments  Appointment[]
+  absences      EmployeeAbsence[]
+  packagesSold  PackageSold[]
+
+  @@map("shops")
+}
+
+model Professional {
+  id        String   @id @default(uuid())
+  shopId    String   @map("shop_id")
+  userId    String?  @map("user_id")
+  name      String
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  shop       Shop       @relation(fields: [shopId], references: [id])
+  user       User?      @relation(fields: [userId], references: [id])
+  appointments Appointment[]
+
+  @@map("professionals")
+}
+
+model Service {
+  id              String   @id @default(uuid())
+  shopId          String   @map("shop_id")
+  name            String
+  category        String?
+  price           Decimal  @db.Decimal(10, 2)
+  durationMinutes Int        @default(15) @map("duration_minutes")
+  commissionPercent Decimal?   @default(0) @db.Decimal(5, 2) @map("commission_percent")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  shop         Shop      @relation(fields: [shopId], references: [id])
+  appointments Appointment[]
+
+  @@map("services")
+}
+
+model Customer {
+  id            String   @id @default(uuid())
+  shopId        String   @map("shop_id")
+  fullName      String   @map("full_name")
+  phone         String
+  email         String?
+  birthDate     DateTime? @map("birth_date")
+  preferences   String?
+  status        CustomerStatus @default(NEW)
+  noShowCount   Int        @default(0) @map("no_show_count")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  shop        Shop        @relation(fields: [shopId], references: [id])
+  appointments Appointment[]
+
+  @@map("customers")
+  @@index([shopId, phone], name: "idx_customers_shop_phone")
+}
+
+enum CustomerStatus {
+  NEW
+  ACTIVE
+  INACTIVE
+  BLOCKED
+}
+
+model Appointment {
+  id            String   @id @default(uuid())
+  shopId        String   @map("shop_id")
+  professionalId String   @map("professional_id")
+  serviceId     String   @map("service_id")
+  customerId    String   @map("customer_id")
+  startAt       DateTime @map("start_at")
+  endAt         DateTime @map("end_at")
+  status        AppointmentStatus @default(PENDING)
+  totalValue    Decimal  @db.Decimal(10, 2) @map("total_value")
+  paymentMethod PaymentMethod? @map("payment_method")
+  paymentStatus PaymentStatus?   @default(PENDING) @map("payment_status")
+  notes         String?
+  cancelReason  String?   @map("cancel_reason")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  shop        Shop        @relation(fields: [shopId], references: [id])
+  professional Professional @relation(fields: [professionalId], references: [id])
+  service     Service     @relation(fields: [serviceId], references: [id])
+  customer    Customer    @relation(fields: [customerId], references: [id])
+  payment     Payment?
+  auditLogs   AppointmentAuditLog[]
+
+  @@map("appointments")
+  @@index([shopId, startAt], name: "idx_appointments_shop_start")
+  @@index([professionalId, startAt], name: "idx_appointments_professional_start")
+  @@index([status], name: "idx_appointments_status")
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  PIX
+  VOUCHER
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  REFUNDED
+}
+
+model Payment {
+  id            String   @id @default(uuid())
+  appointmentId String   @unique @map("appointment_id")
+  amount        Decimal  @db.Decimal(10, 2)
+  method        PaymentMethod
+  status        PaymentStatus @default(PENDING)
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  appointment   Appointment @relation(fields: [appointmentId], references: [id])
+
+  @@map("payments")
+}
+
+model FCMToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  deviceType  String?  @map("device_type")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user     User @relation(fields: [userId], references: [id])
+
+  @@map("fcm_tokens")
+  @@index([userId], name: "idx_fcm_tokens_user")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  title     String
+  message   String
+  typeKey   String   @map("type_key")
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user     User @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+  @@index([userId, isRead], name: "idx_notifications_user_read")
+}
+
+model EmployeeAbsence {
+  id        String   @id @default(uuid())
+  shopId    String   @map("shop_id")
+  professionalId String @map("professional_id")
+  startDate DateTime @map("start_date")
+  endDate   DateTime @map("end_date")
+  reason    String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  shop     Shop @relation(fields: [shopId], references: [id])
+
+  @@map("employee_absences")
+}
+
+model PackageSold {
+  id        String   @id @default(uuid())
+  shopId    String   @map("shop_id")
+  customerId String  @map("customer_id")
+  serviceId  String  @map("service_id")
+  quantity   Int
+  totalValue Decimal @db.Decimal(10, 2) @map("total_value")
+  soldAt    DateTime @default(now()) @map("sold_at")
+
+  shop     Shop @relation(fields: [shopId], references: [id])
+
+  @@map("packages_sold")
+}
+
+model AppointmentAuditLog {
+  id        String   @id @default(uuid())
+  appointmentId String @map("appointment_id")
+  oldStatus   AppointmentStatus? @map("old_status")
+  newStatus   AppointmentStatus @map("new_status")
+  reason      String
+  source      AuditSource @map("source")
+  changedBy   String?  @map("changed_by")
+  changedAt   DateTime @default(now()) @map("changed_at")
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id])
+
+  @@map("appointment_audit_logs")
+  @@index([appointmentId], name: "idx_audit_logs_appointment")
+  @@index([changedAt], name: "idx_audit_logs_changed")
+}
+
+enum AuditSource {
+  SYSTEM
+  MANUAL
+}
+
+enum Role {
+  BARBER
+  ADMIN
+}

@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "strategy": "economy",
+  "workers": [
+    {
+      "id": "copilot-teste",
+      "provider": "custom",
+      "command": "copilot",
+      "mode": "write",
+      "cwd": ".",
+      "task": "Criar arquivo COPILOT_TEST.md com: 'Teste Copilot via Aletheia OK'"
+    }
+  ]
+}

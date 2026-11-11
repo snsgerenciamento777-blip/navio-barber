@@ -1,0 +1,120 @@
+import { z } from "zod";
+import { csrfShopsWriteProcedure, csrfProfessionalsWriteProcedure, shopsReadProcedure, professionalsReadProcedure } from "../index";
+import { TRPCError } from "@trpc/server";
+async function validarShopDoUsuario(
+  prisma: any,
+  userId: string,
+  shopId: string,
+): Promise<void> {
+  const shop = await prisma.shop.findFirst({
+    where: { id: shopId, ownerId: userId },
+  });
+  if (!shop) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Usuário não possui acesso a esta loja",
+    });
+  }
+}
+
+export const shopRouter = {
+  getSettings: shopsReadProcedure.input(z.object({ shopId: z.string() })).query(async ({ ctx, input }) => {
+    await validarShopDoUsuario(ctx.prisma, ctx.session!.user.id, input.shopId);
+    const shop = await ctx.prisma.shop.findUnique({
+      where: { id: input.shopId },
+      include: { professionals: true, services: true },
+    });
+    if (!shop) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "Barbearia não encontrada" });
+    }
+    return shop;
+  }),
+
+  updateSettings: csrfShopsWriteProcedure
+    .input(
+      z.object({
+        shopId: z.string(),
+        name: z.string().min(1).optional(),
+        address: z.string().optional(),
+        phone: z.string().optional(),
+        email: z.string().email().optional(),
+        category: z.string().optional(),
+        logoUrl: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      await validarShopDoUsuario(ctx.prisma, ctx.session!.user.id, input.shopId);
+      const { shopId, ...data } = input;
+      const shop = await ctx.prisma.shop.update({ where: { id: shopId }, data });
+      return shop;
+    }),
+
+  getProfessionals: professionalsReadProcedure
+    .input(z.object({ shopId: z.string(), isActive: z.boolean().optional() }))
+    .query(async ({ ctx, input }) => {
+      await validarShopDoUsuario(ctx.prisma, ctx.session!.user.id, input.shopId);
+      return ctx.prisma.professional.findMany({
+        where: { shopId: input.shopId, isActive: input.isActive },
+        orderBy: { name: "asc" },
+      });
+    }),
+
+  createProfessional: csrfProfessionalsWriteProcedure
+    .input(
+      z.object({
+        shopId: z.string(),
+        name: z.string().min(1),
+        userId: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      await validarShopDoUsuario(ctx.prisma, ctx.session!.user.id, input.shopId);
+      const professional = await ctx.prisma.professional.create({
+        data: {
+          shopId: input.shopId,
+          name: input.name,
+          userId: input.userId,
+          isActive: true,
+        },
+      });
+      return professional;
+    }),
+
+  getSetupStatus: shopsReadProcedure.input(z.object({ shopId: z.string() })).query(async ({ ctx, input }) => {
+    await validarShopDoUsuario(ctx.prisma, ctx.session!.user.id, input.shopId);
+    const shop = await ctx.prisma.shop.findUnique({
+      where: { id: input.shopId },
+      include: {
+        professionals: true,
+        services: { where: { isActive: true } },
+      },
+    });
+    if (!shop) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "Barbearia não encontrada" });
+    }
+
+    // Calcular progresso de setup baseado nos steps: account, company, branch, category, service, logo
+    const steps = [
+      { id: "account", name: "Conta", completed: !!shop.ownerId },
+      { id: "company", name: "Empresa", completed: !!shop.name && !!shop.address },
+      { id: "branch", name: "Filial", completed: !!shop.phone },
+      { id: "category", name: "Categoria", completed: !!shop.category },
+      { id: "service", name: "Serviço", completed: shop.services.length > 0 },
+      { id: "logo", name: "Logo", completed: !!shop.logoUrl },
+    ];
+
+    const completedSteps = steps.filter((s) => s.completed).length;
+    const totalSteps = steps.length;
+    const progress = Math.round((completedSteps / totalSteps) * 100);
+    const schedulingReady = completedSteps === totalSteps;
+
+    return {
+      progress,
+      completedSteps,
+      totalSteps,
+      completed: schedulingReady,
+      schedulingReady,
+      steps,
+    };
+  }),
+};

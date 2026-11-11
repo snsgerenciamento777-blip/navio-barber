@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "strategy": "balanced",
+  "workers": [
+    {
+      "id": "claude-worker",
+      "provider": "claude",
+      "mode": "write",
+      "cwd": ".",
+      "task": "Create a simple API_TYPES.md documenting the core TypeScript types for Navio Barber 2.0 appointments module"
+    },
+    {
+      "id": "copilot-worker",
+      "provider": "custom",
+      "command": "copilot",
+      "mode": "write",
+      "cwd": ".",
+      "task": "Create a simple DB_SCHEMA.md documenting the Prisma schema for Navio Barber 2.0 appointments module"
+    }
+  ]
+}

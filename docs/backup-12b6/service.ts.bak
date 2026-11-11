@@ -1,0 +1,116 @@
+import { z } from "zod";
+import { csrfServicesWriteProcedure, servicesReadProcedure } from "../index";
+import { TRPCError } from "@trpc/server";
+
+const MIN_DURATION_MINUTES = 15; // Duração mínima de serviço
+
+async function validarShopDoUsuario(
+  prisma: any,
+  userId: string,
+  shopId: string,
+): Promise<void> {
+  const shop = await prisma.shop.findFirst({
+    where: { id: shopId, ownerId: userId },
+  });
+  if (!shop) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Usuário não possui acesso a esta loja",
+    });
+  }
+}
+
+export const serviceRouter = {
+  list: servicesReadProcedure
+    .input(z.object({ shopId: z.string().optional(), isActive: z.boolean().optional() }))
+    .query(async ({ ctx, input }) => {
+      if (input.shopId) {
+        await validarShopDoUsuario(ctx.prisma, ctx.session!.user.id, input.shopId);
+      }
+
+      return ctx.prisma.service.findMany({
+        where: {
+          shopId: input.shopId,
+          isActive: input.isActive,
+        },
+        orderBy: { name: "asc" },
+      });
+    }),
+
+  getById: servicesReadProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
+    const service = await ctx.prisma.service.findUnique({ where: { id: input.id } });
+    if (!service) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "Serviço não encontrado" });
+    }
+
+    await validarShopDoUsuario(ctx.prisma, ctx.session!.user.id, service.shopId);
+    return service;
+  }),
+
+  create: csrfServicesWriteProcedure
+    .input(
+      z.object({
+        shopId: z.string(),
+        name: z.string().min(1),
+        category: z.string().optional(),
+        price: z.number().positive(),
+        durationMinutes: z.number().min(MIN_DURATION_MINUTES),
+        commissionPercent: z.number().min(0).max(100).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // RG-BB-03: Nome, preço e duração obrigatórios; duração mínima 15min
+      const service = await ctx.prisma.service.create({
+        data: {
+          shopId: input.shopId,
+          name: input.name,
+          category: input.category,
+          price: input.price,
+          durationMinutes: input.durationMinutes,
+          commissionPercent: input.commissionPercent,
+          isActive: true,
+        },
+      });
+      return service;
+    }),
+
+  update: csrfServicesWriteProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        name: z.string().min(1).optional(),
+        category: z.string().optional(),
+        price: z.number().positive().optional(),
+        durationMinutes: z.number().min(MIN_DURATION_MINUTES).optional(),
+        commissionPercent: z.number().min(0).max(100).optional(),
+        isActive: z.boolean().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      const service = await ctx.prisma.service.findUnique({ where: { id } });
+      if (!service) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Serviço não encontrado" });
+      }
+      await validarShopDoUsuario(ctx.prisma, ctx.session!.user.id, service.shopId);
+
+      const updated = await ctx.prisma.service.update({ where: { id }, data });
+      return updated;
+    }),
+
+  deactivate: csrfServicesWriteProcedure.input(z.object({ id: z.string() })).mutation(async ({ ctx, input }) => {
+    // RG-BB-03: Serviço inativo não aparece para agendamento novo
+    // Histórico de agendamentos com serviço inativo é preservado
+    const service = await ctx.prisma.service.findUnique({ where: { id: input.id } });
+    if (!service) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "Serviço não encontrado" });
+    }
+    await validarShopDoUsuario(ctx.prisma, ctx.session!.user.id, service.shopId);
+
+    const updated = await ctx.prisma.service.update({
+      where: { id: input.id },
+      data: { isActive: false },
+    });
+    return updated;
+  }),
+};

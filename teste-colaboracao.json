@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "strategy": "balanced",
+  "workers": [
+    {
+      "id": "claude-pesquisa",
+      "provider": "claude",
+      "mode": "write",
+      "cwd": ".",
+      "task": "Pesquisar e documentar: quais são os 5 principais padrões de arquitetura para sistemas de agendamento de barbearias multi-tenant? Responda em API_ARCHITECTURE_PATTERNS.md com exemplos de código TypeScript"
+    },
+    {
+      "id": "copilot-implementacao",
+      "provider": "custom",
+      "command": "copilot",
+      "mode": "write",
+      "cwd": ".",
+      "task": "Implementar: criar um schema Prisma básico para o módulo de agendamentos de uma barbearia multi-tenant. Salve em PRISMA_SCHEMA_AGENDAMENTOS.prisma"
+    }
+  ]
+}

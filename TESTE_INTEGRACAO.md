@@ -1,0 +1,1 @@
+Integração Kilo → Aletheia → Claude Code funcionando!

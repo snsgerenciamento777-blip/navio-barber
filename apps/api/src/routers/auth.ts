@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { protectedProcedure, csrfBarberProcedure, adminProcedure } from "../index";
+import { protectedProcedure, csrfBarberProcedure, adminProcedure } from "../index.ts";
 import { TRPCError } from "@trpc/server";
 import { Role } from "@prisma/client";
 import { auth } from "@navio-barber/auth";
@@ -48,6 +48,12 @@ export const authRouter = {
   // 2. Usuário recebe e-mail "esqueci minha senha" (sendResetPassword do Better Auth)
   // 3. Usuário define senha via Better Auth /api/auth/reset-password
   // 4. Better Auth armazena hash no modelo Account (formato Better Auth: scrypt r=16+NFKC)
+  //
+  // IMPLEMENTAÇÃO sendResetPassword (packages/auth/src/index.ts):
+  // - Desenvolvimento: Grava URL de reset em tmp/password-resets/ e loga no console
+  // - Produção: Configure EMAIL_PROVIDER via env vars (ex: RESEND_API_KEY, SENDGRID_API_KEY)
+  //   e implemente sendResetPassword real usando o provedor escolhido.
+  // - Budget: R$ 0,00 (sem serviços pagos em desenvolvimento)
   //
   // IMPORTANTE: Não definir passwordHash diretamente no User.
   // O Better Auth gerencia senhas exclusivamente via modelo Account.

@@ -1,0 +1,312 @@
+# INVENTÁRIO OFICIAL DA TRIPULAÇÃO — NAVIO BARBER 2.0
+
+**Data:** 2026-11-05 | **Versão:** 1.0 | **Auditor:** Claude Code (Opus 5.5)
+**Projeto:** Navio Barber 2.0 | **Orquestrador:** Aletheia v23
+
+---
+
+## 1. RESUMO EXECUTIVO
+
+| Métrica | Valor |
+|---|---|
+| Ferramentas Totais | 12 |
+| Agentes CLI | 7 |
+| Extensões VS Code | 8 |
+| Gateways | 1 |
+| Skills Orquestração | 1 |
+| **Agentes Operacionais** | **4** |
+| Agentes Parciais | 3 |
+| Agentes Inoperantes | 1 |
+
+**Tripulação Pronta:** 6 agentes (4 CLI + 2 IDE)
+**Bloqueador Principal:** Aletheia onboarding incompleto
+
+---
+
+## 2. INVENTÁRIO COMPLETO
+
+### 2.1 Agentes CLI
+
+| Agente | Versão | Instalado | Autenticado | Operacional | Testado |
+|---|---|---|---|---|---|
+| **Claude Code** | 2.1.318 | ✅ | ✅ OAuth | ✅ | ✅ |
+| **GitHub Copilot CLI** | 1.0.105 | ✅ | ✅ GitHub | ✅ | ✅ |
+| **Agy/Antigravity** | 1.4.10 | ✅ | ❌ (API Key via env var) | ❌ | ❌ |
+| **Gemini CLI** | 0.67.0 | ✅ | ❌ (API Key via env var inválida) | ❌ | ❌ |
+| **OpenCode** | 2.2.5 | ✅ | ❌ | ❌ | ❌ |
+| **Codex CLI** | - | ❌ | - | - | - |
+| **Kimi** | - | ❌ | - | - | - |
+
+### 2.2 Extensões VS Code (8 ativas)
+
+- Claude Code, Gemini CLI Companion, Gemini Code Assist, KiloCode
+- OpenAI ChatGPT, OpenAI Codex Audio, Claude Dev, OpenCode
+
+### 2.3 Gateway
+
+| Gateway | Versão | Endpoint | Status | Segurança |
+|---|---|---|---|---|
+| **9Router** | 0.5.112 | http://192.168.5.79:20128 | 🔴 Rodando | ❌ **CRÍTICO: HTTP plaintext em 0.0.0.0** |
+
+### 2.4 Orquestração
+
+| Skill | Versão | Status | Onboarding |
+|---|---|---|---|
+| **Aletheia** | v23 | ✅ Carregada | ❌ Incompleto |
+
+---
+
+## 3. MODELOS DISPONÍVEIS
+
+### 3.1 Claude Code (Subscription - $0 marginal)
+
+| Modelo | Comando | Uso Recomendado |
+|---|---|---|
+| Opus 5.5 | `--model opus` | Arquiteto, decisões complexas |
+| Sonnet 5.5 | `--model sonnet` | Implementação padrão |
+| Haiku 5.5 | `--model haiku` | Review, docs, tarefas rápidas |
+| Fable 5.1 | `--model fable` | Análise especializada |
+
+**Limites:** 5h janela / Semana (reset 2ª feira)
+
+### 3.2 GitHub Copilot CLI (AI Credits / BYOK)
+
+| Fonte | Modelos | Status |
+|---|---|---|
+| **Padrão (GitHub)** | GPT-6 Luna, MAI-Code-1.1-Flash, GPT-5.x | ✅ Testado |
+| **BYOK Anthropic** | Claude Opus/Sonnet/Haiku/Fable | ✅ Suportado |
+| **BYOK OpenAI** | GPT-4/4o/5, o1 | ✅ Suportado |
+| **BYOK Azure** | Deployments custom | ✅ Suportado |
+| **BYOK Ollama** | Modelos locais | ✅ Suportado |
+| **Via 9Router** | Qualquer roteado | ✅ Suportado |
+
+**Testado:** Auto → GPT-6 Luna / MAI-Code-1.1-Flash
+**Autenticação:** GitHub OAuth ✅
+
+### 3.3 Agy/Antigravity
+
+| Modelo | Status | Blocker |
+|---|---|---|
+| Gemini (Google) | ❌ Não operacional | `GEMINI_API_KEY` env var ausente |
+
+**⚠️ Segurança:** NUNCA armazene API key em config. Use `setx GEMINI_API_KEY "sua-chave"`.
+
+### 3.4 9Router Gateway
+
+| Modelo | Provedor | Status |
+|---|---|---|
+| GPT-5.5 | OpenAI | ✅ Configurado (sem key) |
+| Claude | Anthropic | ⚠️ Não configurado |
+
+---
+
+## 4. CAPACIDADES TÉCNICAS
+
+| Capacidade | Claude | Copilot | Agy | Gemini | OpenCode | KiloCode |
+|---|---|---|---|---|---|---|
+| Editar arquivos | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (IDE) |
+| Terminal | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (IDE) |
+| Git/Worktrees | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (IDE) |
+| Não-interativo | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| Output JSON/JSONL | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
+| Sessões isoladas | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
+| Worktrees isolados | ✅ | ✅ | ✅ | ⚠️ | ✅ | ❌ |
+| Paralelismo | ✅ Subagents | ✅ Fleet + Sessions | ❌ | ❌ | ❌ | ❌ |
+| Agentes especializados | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| MCP Servers | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ |
+| **Aletheia** | **Native** | **Custom Provider** | **Native** | **Não** | **Detectado** | **Não** |
+
+---
+
+## 5. INTEGRAÇÕES TESTADAS ✅
+
+| Integração | Resultado |
+|---|---|
+| Claude Code ↔ Aletheia (probe/doctor) | ✅ `loggedIn: true` |
+| Claude Code → Subagents paralelos | ✅ Múltiplos Agent tools |
+| Claude Code → Worktrees | ✅ Isolamento funcional |
+| Copilot CLI → Non-interactive (`-p --yolo`) | ✅ Funcional |
+| Copilot CLI → Worktrees (`-C`) | ✅ Arquivos isolados |
+| Copilot CLI → Sessões (`--session-id`) | ✅ Isoladas |
+| Copilot CLI → JSON Output | ✅ JSONL |
+| Copilot CLI → Fleet Mode (`--fleet`) | ✅ Subagentes paralelos (usa Alethe skill!) |
+| 9Router → Detect Tools | ✅ 8 ferramentas detectadas |
+| Aletheia Doctor/Probe | ✅ Detecta providers + auth |
+
+---
+
+## 6. FUNÇÕES DELEGÁVEIS
+
+| Função | Primário (Claude) | Secundário (Copilot) |
+|---|---|---|
+| Arquiteto/Planejamento | Opus | GPT-5.5 (BYOK/9Router) |
+| Backend | Sonnet | GPT-5 (BYOK/9Router) |
+| Frontend | Sonnet | GPT-5 (BYOK/9Router) |
+| Code Review | Haiku/Sonnet | GPT-4o-mini (BYOK) |
+| Pesquisa/Análise | Haiku | Fleet + Web |
+| Documentação | Haiku/Fable | GPT-4o-mini |
+| Testes/Validação | Haiku | GPT-4o-mini |
+| Refatoração | Sonnet | GPT-5 |
+| Debugging | Opus/Sonnet | GPT-5 |
+
+---
+
+## 7. CONCORRÊNCIA SEGURA
+
+| Cenário | Seguro | Isolamento |
+|---|---|---|
+| 2+ Claude Subagents | ✅ | Processos separados |
+| 2+ Copilot Sessions | ✅ | Session ID + Worktree |
+| 1 Claude + 1 Copilot | ✅ | Worktrees obrigatórias |
+| Múltiplos Agy | ❌ | Não suportado |
+
+---
+
+## 8. ALETHEIA PROVIDERS
+
+### 8.1 Nativos (Built-in)
+
+| Provider | ID | Status | Comando |
+|---|---|---|---|
+| **Claude Code** | `claude` | ✅ Operacional | `claude --print --output-format stream-json --verbose --permission-mode acceptEdits --disallowedTools Agent,Workflow --strict-mcp-config --model <m> --effort <e>` |
+| **Agy** | `agy` | ⚠️ Requer API Key (env var) | `agy --output-format json --mode accept-edits --print-timeout 300s --add-dir <cwd> --print=<task>` |
+| **Codex** | `codex` | ❌ Não instalado | - |
+| **Kimi** | `kimi` | ❌ Não instalado | - |
+
+### 8.2 Custom Provider: GitHub Copilot CLI
+
+```yaml
+# playbooks.yaml → adapters
+copilot:
+  command: "copilot"
+  args: ["-p", "{task}", "--yolo", "--output-format", "json", "-C", "{cwd}", "--session-id", "{session_id}"]
+  promptTransport: "argument"
+  outputFormat: "jsonl"
+  capabilities: {readOnly: true, write: true, resume: true, structuredOutput: true, tokenUsage: true}
+  modelSources: [GitHub default, BYOK Anthropic, BYOK OpenAI, BYOK Azure, BYOK Ollama, 9Router]
+```
+
+### 8.3 NÃO Acionáveis pela Aletheia
+
+- KiloCode (VS Code only)
+- Gemini CLI (não autenticado)
+- Extensões VS Code (ChatGPT, Codex Audio, etc.)
+- 9Router (gateway, não worker)
+
+---
+
+## 9. LIMITAÇÕES E BLOQUEADORES
+
+| Ferramenta | Bloqueador | Severidade |
+|---|---|---|
+| **Aletheia** | Onboarding incompleto (sem policy, sem budget) | 🔴 Crítica |
+| **Agy** | Requer `GEMINI_API_KEY` (env var) | 🔴 Crítica |
+| **Gemini CLI** | API Key não configurada via env var | 🔴 Crítica |
+| **OpenCode** | Não autenticado | 🟡 Importante |
+| **9Router** | **CRÍTICO: HTTP plaintext exposto em 0.0.0.0:20128** | 🔴 **Segurança - MITM, acesso não autorizado** |
+| **KiloCode** | Sem CLI worker | 🟢 Baixa |
+| **Codex/Kimi** | Não instalados | 🟢 Baixa |
+
+---
+
+## 10. CUSTOS
+
+| Ferramenta | Modelo | Custo Marginal |
+|---|---|---|
+| **Claude Code** | Subscription | **$0** |
+| **Copilot CLI** | AI Credits (plano) | Variável |
+| **Copilot BYOK Anthropic** | Pay-per-use | $3-15/M tokens |
+| **Copilot BYOK OpenAI** | Pay-per-use | $2-30/M tokens |
+| **Copilot 9Router** | Pay-per-use | Variável |
+| **Agy** | Pay-per-use Google | $0.075-3.50/M tokens |
+| **OpenCode** | Desconhecido | Variável |
+
+---
+
+## 11. ARQUITETURA RECOMENDADA
+
+```
+COMANDANTE: Claude Code (Opus 5.5)
+    │
+    ▼
+ORQUESTRADOR: Aletheia (v23)
+    │
+    ├─────────────────┬─────────────────┬─────────────────┐
+    ▼                 ▼                 ▼
+EQUIPE CLAUDE    EQUIPE COPILOT    GATEWAY 9ROUTER
+(Subscription)   (AI Credits/BYOK) (Roteamento)
+    │                 │                 │
+    ├─ Opus: Arquiteto
+    ├─ Sonnet: Implement.
+    ├─ Haiku: Review/Docs
+    ├─ Fable: Análise
+    │                 ├─ GPT-5.5: Arquiteto
+    │                 ├─ GPT-5: Implement.
+    │                 ├─ GPT-4o-mini: Review
+    │                 ├─ Fleet: Paralelo
+    │                 └─ Sessions: Isoladas
+    │                 │                 ├─ Modelos: Todos
+    │                 │                 ├─ Roteia por custo
+    │                 │                 └─ BYOK: Anthropic/OpenAI/Azure/Ollama
+    │                 │
+    └─────────────────┴─────────────────┘
+                    │
+                    ▼
+          CONTEXTO COMPARTILHADO
+          • Handoff.md • State.json • Journal.jsonl
+          • Diff.patch • Outcome.json • AGENTS.md/CLAUDE.md
+          • Budget • Quota Monitoring
+```
+
+### Perfis de Custo (Playbooks)
+
+| Perfil | Cheap | Standard | Strong |
+|---|---|---|---|
+| **savings** | Haiku / GPT-4o-mini | Sonnet / GPT-5 | Opus / GPT-5.5 |
+| **balanced** | Haiku / GPT-4o-mini | Sonnet / GPT-5 | Opus / GPT-5.5 |
+| **aggressive** | Sonnet / GPT-5 | Opus / GPT-5.5 | Opus xhigh / GPT-5.5 |
+
+### Roteamento por Fase
+
+| Fase | Primário | Secundário |
+|---|---|---|
+| Pesquisa | Claude Haiku (fleet) | Copilot Fleet (GPT-5) |
+| Arquitetura | Claude Opus | Copilot GPT-5.5 (BYOK) |
+| Backend | Claude Sonnet | Copilot GPT-5 (BYOK) |
+| Frontend | Claude Sonnet | Copilot GPT-5 (BYOK) |
+| Review | Claude Haiku | Copilot GPT-4o-mini |
+| Testes | Claude Haiku | Copilot GPT-4o-mini |
+| Docs | Claude Haiku/Fable | Copilot GPT-4o-mini |
+| **Integração** | **Claude Opus (Lead)** | - |
+
+---
+
+## 12. PRÓXIMAS AÇÕES (AUTORIZAÇÃO NECESSÁRIA)
+
+| # | Ação | Prioridade |
+|---|---|---|
+| 1 | Onboarding Aletheia (`playbook --init` + `policy set`) | 🔴 Crítica |
+| 2 | Configurar `GEMINI_API_KEY` env var para Agy/Gemini CLI | 🔴 Crítica |
+| 3 | Budget padrão Aletheia (`--max-calls 20 --max-reported-cost-usd 5`) | 🔴 Crítica |
+| 4 | **Segurança 9Router** (`--host 127.0.0.1 --port 20128` + TLS se remoto) | 🔴 **CRÍTICA** |
+| 5 | Autenticar OpenCode (`opencode auth login`) | 🟡 Importante |
+| 6 | Testar BYOK Anthropic no Copilot | 🟡 Importante |
+| 7 | Testar 9Router Gateway no Copilot | 🟡 Importante |
+| 8 | Configurar Copilot como Custom Provider na Aletheia | 🟡 Importante |
+| 9 | Teste integração completa (Claude + Copilot) | 🟡 Importante |
+
+---
+
+## 13. INFORMAÇÕES NÃO VERIFICADAS
+
+- Modelos exatos do plano GitHub Copilot
+- Limites de concorrência Copilot
+- Custo real AI Credits por modelo
+- Integração MCP servers compartilhados
+- Modelos OpenCode disponíveis
+- Modelos 9Router além de GPT-5.5
+
+---
+
+**FIM DO INVENTÁRIO v1.0**
+**Próxima atualização:** Após execução das ações críticas (1-4)

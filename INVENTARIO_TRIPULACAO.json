@@ -1,0 +1,447 @@
+{
+  "metadata": {
+    "inventoryVersion": "1.0",
+    "auditDate": "2026-11-05",
+    "auditor": "Claude Code (Opus 5.5)",
+    "project": "Navio Barber 2.0",
+    "projectPath": "C:\\Users\\User\\Documents\\Navio Barber\\NV2.0\\navio-barber",
+    "orchestrator": "Aletheia (skill v23)",
+    "environment": {
+      "os": "Windows 10 Enterprise 10.0.19045",
+      "python": "3.14.10 (via py)",
+      "git": "available",
+      "tmux": "unknown"
+    }
+  },
+  "summary": {
+    "totalTools": 12,
+    "cliAgents": 7,
+    "vscodeExtensions": 8,
+    "gateways": 1,
+    "orchestrationSkills": 1,
+    "operationalAgents": 4,
+    "partialAgents": 3,
+    "nonOperationalAgents": 1
+  },
+  "tools": {
+    "cliAgents": [
+      {
+        "name": "Claude Code",
+        "version": "2.1.318",
+        "path": "C:\\Users\\User\\.local\\bin\\claude.EXE",
+        "type": "CLI Agent Native",
+        "installed": true,
+        "authenticated": true,
+        "authMethod": "OAuth Token (first-party)",
+        "configured": true,
+        "operational": true,
+        "tested": true,
+        "models": [
+          {"name": "Opus 5.5", "available": true, "access": "claude --model opus", "cost": "subscription"},
+          {"name": "Sonnet 5.5", "available": true, "access": "claude --model sonnet", "cost": "subscription"},
+          {"name": "Haiku 5.5", "available": true, "access": "claude --model haiku", "cost": "subscription"},
+          {"name": "Fable 5.1", "available": true, "access": "claude --model fable", "cost": "subscription"}
+        ],
+        "capabilities": {
+          "editFiles": true,
+          "executeTerminal": true,
+          "gitWorktrees": true,
+          "nonInteractive": true,
+          "structuredOutput": "JSONL (stream-json)",
+          "isolatedSessions": true,
+          "worktrees": true,
+          "parallelExecution": "Subagents (Agent tool)",
+          "specializedAgents": ["general-purpose", "Plan", "code-simplifier", "Explore", "claude-code-guide"],
+          "mcpServers": true,
+          "aletheiaIntegration": "native (provider: claude)"
+        },
+        "limits": {
+          "window5h": "~40-50 requests Opus",
+          "weekly": "accumulative",
+          "reset": "Monday"
+        },
+        "costModel": "subscription (included)",
+        "marginalCost": 0
+      },
+      {
+        "name": "GitHub Copilot CLI",
+        "version": "1.0.105",
+        "path": "C:\\Users\\User\\AppData\\Roaming\\npm\\copilot.cmd",
+        "type": "CLI Agent Native",
+        "installed": true,
+        "authenticated": true,
+        "authMethod": "GitHub OAuth",
+        "configured": true,
+        "operational": true,
+        "tested": true,
+        "models": {
+          "default": ["GPT-6 Luna", "MAI-Code-1.1-Flash", "GPT-5.x series"],
+          "byok": {
+            "anthropic": ["Claude Opus", "Claude Sonnet", "Claude Haiku", "Claude Fable"],
+            "openai": ["GPT-4", "GPT-4o", "GPT-5", "o1"],
+            "azure": ["Custom deployments"],
+            "ollama": ["Local models"]
+          },
+          "via9router": "Any routed model"
+        },
+        "capabilities": {
+          "editFiles": true,
+          "executeTerminal": true,
+          "gitWorktrees": true,
+          "nonInteractive": true,
+          "structuredOutput": "JSONL (--output-format json)",
+          "isolatedSessions": true,
+          "worktrees": true,
+          "parallelExecution": ["Fleet mode (--fleet)", "Multiple sessions (--session-id)"],
+          "specializedAgents": ["--agent <name>", "--plugin-dir", "Skills from .github/skills", "Agents from .github/agents"],
+          "mcpServers": ["github-mcp-server", "githubiq", "custom via --additional-mcp-config"],
+          "aletheiaIntegration": "custom provider",
+          "fleetMode": true,
+          "sessionLimits": "--max-ai-credits <N> (min 30)"
+        },
+        "testedFeatures": [
+          "non-interactive prompt (-p --yolo)",
+          "worktrees (-C path)",
+          "isolated sessions (--session-id UUID)",
+          "json output (--output-format json)",
+          "fleet mode (--fleet)",
+          "yolo permissions (--yolo)"
+        ],
+        "costModel": "AI Credits (GitHub Copilot plan) / BYOK provider pricing",
+        "billing": "AI Credits (new) / Premium Requests (legacy)"
+      },
+      {
+        "name": "Agy / Antigravity",
+        "version": "1.4.10",
+        "path": "C:\\Users\\User\\AppData\\Local\\agy\\bin\\agy.EXE",
+        "type": "CLI Agent Native",
+        "installed": true,
+        "authenticated": false,
+        "authMethod": "Environment Variable: GEMINI_API_KEY (NOT stored in config)",
+        "configured": false,
+        "operational": false,
+        "tested": false,
+        "models": {
+          "configured": "Gemini (modelProvider: gemini via settings.json)",
+          "status": "requires GEMINI_API_KEY env var"
+        },
+        "capabilities": {
+          "editFiles": true,
+          "executeTerminal": true,
+          "gitWorktrees": true,
+          "nonInteractive": true,
+          "structuredOutput": "JSON",
+          "isolatedSessions": true,
+          "worktrees": true,
+          "parallelExecution": false,
+          "specializedAgents": false,
+          "mcpServers": false,
+          "aletheiaIntegration": "native (provider: agy)"
+        },
+        "blockers": ["GEMINI_API_KEY environment variable not set"],
+        "costModel": "Pay-per-use Google Gemini API",
+        "securityNote": "API key MUST be provided via GEMINI_API_KEY environment variable. Never store in config files. Run `setx GEMINI_API_KEY \"your-key\"` or add to shell profile."
+      },
+      {
+        "name": "Gemini CLI",
+        "version": "0.67.0",
+        "path": "C:\\Users\\User\\AppData\\Roaming\\npm\\gemini.cmd",
+        "type": "CLI Agent Native",
+        "installed": true,
+        "authenticated": false,
+        "authMethod": "Environment Variable: GEMINI_API_KEY (NOT stored in config)",
+        "configured": false,
+        "operational": false,
+        "tested": false,
+        "models": {
+          "status": "API key not configured via env var"
+        },
+        "capabilities": {
+          "editFiles": true,
+          "executeTerminal": true,
+          "gitWorktrees": true,
+          "nonInteractive": true,
+          "structuredOutput": false,
+          "isolatedSessions": false,
+          "worktrees": false,
+          "parallelExecution": false,
+          "specializedAgents": false,
+          "mcpServers": true,
+          "aletheiaIntegration": "none"
+        },
+        "blockers": ["GEMINI_API_KEY environment variable not set or invalid"],
+        "costModel": "Pay-per-use Google Gemini API",
+        "securityNote": "API key MUST be provided via GEMINI_API_KEY environment variable. Never store in config files. To clear any stored key: `gemini config unset api_key`. Then set env var: `setx GEMINI_API_KEY \"your-key\"`."
+      },
+      {
+        "name": "OpenCode",
+        "version": "2.2.5",
+        "path": "C:\\Users\\User\\AppData\\Roaming\\npm\\opencode.cmd",
+        "type": "CLI Agent Native",
+        "installed": true,
+        "authenticated": false,
+        "authMethod": "OAuth/Token",
+        "configured": false,
+        "operational": false,
+        "tested": false,
+        "models": {
+          "supported": ["Anthropic", "OpenAI", "Others"],
+          "status": "not authenticated"
+        },
+        "capabilities": {
+          "editFiles": true,
+          "executeTerminal": true,
+          "gitWorktrees": true,
+          "nonInteractive": true,
+          "structuredOutput": true,
+          "isolatedSessions": true,
+          "worktrees": true,
+          "parallelExecution": false,
+          "specializedAgents": false,
+          "mcpServers": true,
+          "aletheiaIntegration": "detected by 9router, not authenticated"
+        },
+        "blockers": ["Not authenticated"],
+        "costModel": "Unknown (pay-per-use or subscription)"
+      },
+      {
+        "name": "Codex CLI",
+        "version": "not installed",
+        "path": null,
+        "type": "CLI Agent Native",
+        "installed": false,
+        "authenticated": false,
+        "operational": false,
+        "tested": false,
+        "models": [],
+        "capabilities": {},
+        "aletheiaIntegration": "native (provider: codex) - not available"
+      },
+      {
+        "name": "Kimi",
+        "version": "not installed",
+        "path": null,
+        "type": "CLI Agent Native",
+        "installed": false,
+        "authenticated": false,
+        "operational": false,
+        "tested": false,
+        "models": [],
+        "capabilities": {},
+        "aletheiaIntegration": "native (provider: kimi) - not available"
+      }
+    ],
+    "vscodeExtensions": [
+      {"id": "anthropic.claude-code", "name": "Claude Code", "status": "active"},
+      {"id": "google.gemini-cli-vscode-ide-companion", "name": "Gemini CLI IDE Companion", "status": "active"},
+      {"id": "google.geminicodeassist", "name": "Gemini Code Assist", "status": "active"},
+      {"id": "kilocode.kilo-code", "name": "KiloCode", "status": "active"},
+      {"id": "openai.chatgpt", "name": "OpenAI ChatGPT", "status": "active"},
+      {"id": "openai.codex-audio", "name": "OpenAI Codex Audio", "status": "active"},
+      {"id": "saoudrizwan.claude-dev", "name": "Claude Dev", "status": "active"},
+      {"id": "sst-dev.opencode", "name": "OpenCode", "status": "active"}
+    ],
+    "gateways": [
+      {
+        "name": "9Router",
+        "version": "0.5.112",
+        "path": "C:\\Users\\User\\AppData\\Roaming\\npm\\9router.cmd",
+        "endpoint": "http://192.168.5.79:20128",
+        "bindAddress": "0.0.0.0 (SECURITY RISK - PLAINTEXT HTTP ON NON-LOOPBACK)",
+        "status": "running",
+        "configuredTools": {
+          "claude": "not configured",
+          "codex": "config exists, no API key",
+          "opencode": "not configured",
+          "kilocode": "not configured",
+          "others": "detected but not configured"
+        },
+        "models": {
+          "confirmed": ["GPT-5.5 (OpenAI)"],
+          "available": "Any via configuration"
+        },
+        "securityIssue": "CRITICAL: Plaintext HTTP exposed on LAN interface (0.0.0.0:20128). Must restart with --host 127.0.0.1. If remote access needed, implement TLS/mTLS with client cert auth.",
+        "integration": "Via BYOK in Copilot/Claude/OpenCode",
+        "remediation": "Stop 9Router and restart: `9router --host 127.0.0.1 --port 20128`"
+      }
+    ],
+    "orchestrationSkills": [
+      {
+        "name": "Aletheia (alethe)",
+        "version": "23",
+        "path": ".agents\\skills\\alethe\\",
+        "status": "loaded",
+        "onboardingComplete": false,
+        "policyExists": false,
+        "playbooksValid": true,
+        "providersDetected": {
+          "claude": {"installed": true, "loggedIn": true},
+          "agy": {"installed": true, "loggedIn": null},
+          "codex": {"installed": false, "loggedIn": null},
+          "kimi": {"installed": false, "loggedIn": null}
+        },
+        "hints": [
+          "orchestration onboarding is incomplete; offer the setup choices",
+          "no default budget; policy set can add hard limits such as --max-calls"
+        ]
+      }
+    ]
+  },
+  "integrationsTested": [
+    {"integration": "Claude Code -> Aletheia probe/doctor", "tested": true, "result": "success", "evidence": "loggedIn: true"},
+    {"integration": "Claude Code -> Subagents parallel", "tested": true, "result": "success", "evidence": "Multiple Agent tools execute in parallel"},
+    {"integration": "Claude Code -> Worktrees", "tested": true, "result": "success", "evidence": "git worktree add + isolated operations"},
+    {"integration": "Copilot CLI -> Non-interactive", "tested": true, "result": "success", "evidence": "copilot -p 'task' --yolo"},
+    {"integration": "Copilot CLI -> Worktrees", "tested": true, "result": "success", "evidence": "-C ../worktree creates files"},
+    {"integration": "Copilot CLI -> Isolated sessions", "tested": true, "result": "success", "evidence": "--session-id UUID isolated"},
+    {"integration": "Copilot CLI -> JSON output", "tested": true, "result": "success", "evidence": "--output-format json (JSONL)"},
+    {"integration": "Copilot CLI -> Fleet mode", "tested": true, "result": "success", "evidence": "--fleet orchestrates subagents (uses Alethe skill)"},
+    {"integration": "Copilot CLI -> BYOK Anthropic", "tested": false, "result": "untested", "evidence": "requires API key"},
+    {"integration": "Copilot CLI -> 9Router Gateway", "tested": false, "result": "untested", "evidence": "requires config"},
+    {"integration": "Agy -> Aletheia", "tested": false, "result": "blocked", "evidence": "requires GEMINI_API_KEY"},
+    {"integration": "9Router -> Detect tools", "tested": true, "result": "success", "evidence": "9router show all detects 8 tools"},
+    {"integration": "Aletheia Doctor/Probe", "tested": true, "result": "success", "evidence": "Detects providers, auth status"}
+  ],
+  "delegatableFunctions": {
+    "architect_planning": {"claude": "Opus", "copilot": "GPT-5.5 (BYOK/9Router)", "agy": "no", "opencode": "unknown"},
+    "backend_implementation": {"claude": "Sonnet", "copilot": "GPT-5 (BYOK/9Router)", "agy": "no", "opencode": "unknown"},
+    "frontend_implementation": {"claude": "Sonnet", "copilot": "GPT-5 (BYOK/9Router)", "agy": "no", "opencode": "unknown", "kilocode": "IDE only"},
+    "code_review": {"claude": "Haiku/Sonnet", "copilot": "GPT-4o-mini (BYOK)", "agy": "no", "opencode": "unknown"},
+    "research_analysis": {"claude": "Haiku", "copilot": "Fleet + Web", "agy": "no", "opencode": "unknown"},
+    "documentation": {"claude": "Haiku/Fable", "copilot": "GPT-4o-mini", "agy": "no", "opencode": "unknown"},
+    "testing_validation": {"claude": "Haiku", "copilot": "GPT-4o-mini", "agy": "no", "opencode": "unknown"},
+    "refactoring": {"claude": "Sonnet", "copilot": "GPT-5", "agy": "no", "opencode": "unknown"},
+    "debugging": {"claude": "Opus/Sonnet", "copilot": "GPT-5", "agy": "no", "opencode": "unknown"}
+  },
+  "concurrencyMatrix": {
+    "nativeParallelism": {
+      "claudeCode": {"mechanism": "Agent tool multiple", "isolation": "Subagents (separate processes)", "limit": "Subscription quota"},
+      "copilotCLI": {"mechanism": ["--fleet (internal subagents)", "--session-id (external sessions)"], "isolation": "Fleet subagents share session limit; CLI sessions independent", "limit": "AI Credits per session"},
+      "agy": {"mechanism": "none", "isolation": "N/A", "limit": "N/A"},
+      "geminiCLI": {"mechanism": "none", "isolation": "N/A", "limit": "N/A"}
+    },
+    "crossToolParallelism": {
+      "claudeWorktreeA_copilotWorktreeB": {"safe": true, "isolation": "Git worktrees", "coordination": "Aletheia handoff.md"},
+      "claudeMain_copilotWorktree": {"safe": true, "isolation": "Partial worktree", "coordination": "Aletheia lead integrates"},
+      "multipleCopilotSessions": {"safe": true, "isolation": "Session ID + worktree", "coordination": "Aletheia coordinates"},
+      "multipleClaudeSubagents": {"safe": true, "isolation": "Process", "coordination": "Not managed by Aletheia directly"}
+    }
+  },
+  "aletheiaProviders": {
+    "native": [
+      {"id": "claude", "status": "operational", "launchCommand": "claude --print --output-format stream-json --verbose --permission-mode acceptEdits --disallowedTools Agent,Workflow --strict-mcp-config --model <m> --effort <e>"},
+      {"id": "agy", "status": "requires_api_key", "launchCommand": "agy --output-format json --mode accept-edits --print-timeout 300s --add-dir <cwd> --print=<task>"},
+      {"id": "codex", "status": "not_installed", "launchCommand": "codex --disable multi_agent exec --sandbox workspace-write --json --output-last-message <result> --cd <cwd> --config mcp_servers={} -"},
+      {"id": "kimi", "status": "not_installed", "launchCommand": "kimi --output-format stream-json --prompt=<task>"}
+    ],
+    "custom": [
+      {
+        "id": "copilot",
+        "status": "tested_operational",
+        "launchCommand": "copilot -p \"{task}\" --yolo --output-format json -C \"{cwd}\" --session-id \"{session_id}\"",
+        "promptTransport": "argument",
+        "outputFormat": "jsonl",
+        "capabilities": {"readOnly": true, "write": true, "resume": true, "structuredOutput": true, "tokenUsage": true},
+        "modelSources": ["GitHub default", "BYOK Anthropic", "BYOK OpenAI", "BYOK Azure", "BYOK Ollama", "9Router Gateway"]
+      },
+      {"id": "opencode", "status": "not_authenticated", "launchCommand": "opencode ...", "note": "Detected by 9router but not authenticated"}
+    ],
+    "notAcionable": [
+      {"tool": "KiloCode (VS Code)", "reason": "IDE extension only, no CLI worker"},
+      {"tool": "Gemini CLI", "reason": "Not authenticated, no native integration"},
+      {"tool": "VS Code Extensions (ChatGPT, Codex Audio, etc.)", "reason": "IDE only, no CLI worker"},
+      {"tool": "9Router", "reason": "Gateway, not worker (use via BYOK)"}
+    ]
+  },
+  "limitations": {
+    "critical": [
+      {"tool": "Aletheia", "issue": "Onboarding incomplete (no policy, no budget)", "blocks": "All orchestration"},
+      {"tool": "Agy", "issue": "Requires GEMINI_API_KEY", "blocks": "Secondary worker"},
+      {"tool": "Gemini CLI", "issue": "Invalid API key", "blocks": "Worker"},
+      {"tool": "OpenCode", "issue": "Not authenticated", "blocks": "Tertiary worker"},
+      {"tool": "9Router", "issue": "Exposed on 0.0.0.0:20128", "blocks": "Security risk"},
+      {"tool": "KiloCode", "issue": "No CLI worker", "blocks": "Aletheia integration"},
+      {"tool": "Codex/Kimi", "issue": "Not installed", "blocks": "Fewer fallback options"}
+    ],
+    "dependencies": {
+      "Aletheia": ["Python 3.9+ (OK: 3.14.10)", "Git", "tmux (for parallel worktrees)"],
+      "Copilot CLI": ["Node.js (npm)", "Git", "GitHub OAuth"],
+      "Agy": ["Python", "GEMINI_API_KEY"],
+      "9Router": ["Node.js", "Port 20128 free"],
+      "Claude Code": ["Active Anthropic subscription"]
+    },
+    "authentications": [
+      {"tool": "Claude Code", "method": "OAuth Token (first-party)", "status": "active", "validity": "Continuous (subscription)"},
+      {"tool": "Copilot CLI", "method": "GitHub OAuth", "status": "active", "validity": "Auto-refresh"},
+      {"tool": "Agy", "method": "Environment Variable: GEMINI_API_KEY", "status": "missing (env var not set)", "validity": "N/A"},
+      {"tool": "Gemini CLI", "method": "Environment Variable: GEMINI_API_KEY", "status": "missing/invalid (env var not set)", "validity": "N/A"},
+      {"tool": "OpenCode", "method": "OAuth/Token", "status": "not authenticated", "validity": "N/A"},
+      {"tool": "9Router", "method": "Provider API Keys (via env vars)", "status": "partial", "validity": "Per provider"},
+      {"tool": "KiloCode", "method": "OAuth (Kilo)", "status": "active", "validity": "Until 2025"}
+    ],
+    "costs": [
+      {"tool": "Claude Code", "model": "Subscription (included)", "limit": "5h window/week", "estimate": "$0 marginal"},
+      {"tool": "Copilot CLI", "model": "AI Credits (plan) / BYOK", "limit": "Per plan", "estimate": "Variable"},
+      {"tool": "Copilot BYOK Anthropic", "model": "Pay-per-use Anthropic", "limit": "API rate limits", "estimate": "$3-15/M tokens"},
+      {"tool": "Copilot BYOK OpenAI", "model": "Pay-per-use OpenAI", "limit": "API rate limits", "estimate": "$2-30/M tokens"},
+      {"tool": "Copilot 9Router", "model": "Pay-per-use providers", "limit": "Gateway + providers", "estimate": "Variable"},
+      {"tool": "Agy", "model": "Pay-per-use Google", "limit": "Gemini rate limits", "estimate": "$0.075-3.50/M tokens"},
+      {"tool": "Gemini CLI", "model": "Pay-per-use Google", "limit": "API rate limits", "estimate": "$0.075-3.50/M tokens"},
+      {"tool": "OpenCode", "model": "Unknown", "limit": "Unknown", "estimate": "Variable"},
+      {"tool": "9Router Gateway", "model": "Free software + providers", "limit": "N/A", "estimate": "$0 + models"}
+    ]
+  },
+  "recommendedArchitecture": {
+    "hierarchy": [
+      "COMMANDER: Claude Code (Opus 5.5)",
+      "ORCHESTRATOR: Aletheia (v23)",
+      "TEAM CLAUDE (Subscription): Opus=Architect, Sonnet=Implementation, Haiku=Review/Docs, Fable=Analysis",
+      "TEAM COPILOT (AI Credits/BYOK): GPT-5.5=Architect, GPT-5=Implementation, GPT-4o-mini=Review, Fleet=Parallel",
+      "GATEWAY 9Router: Model routing, cost optimization, BYOK Anthropic/OpenAI/Azure/Ollama",
+      "SHARED CONTEXT: Handoff.md, State.json, Journal.jsonl, Diff.patch, Outcome.json, AGENTS.md/CLAUDE.md"
+    ],
+    "costProfiles": {
+      "savings": {"cheap": ["Haiku", "GPT-4o-mini"], "standard": ["Sonnet", "GPT-5"], "strong": ["Opus", "GPT-5.5"]},
+      "balanced": {"cheap": ["Haiku", "GPT-4o-mini"], "standard": ["Sonnet", "GPT-5"], "strong": ["Opus", "GPT-5.5"]},
+      "aggressive": {"cheap": ["Sonnet", "GPT-5"], "standard": ["Opus", "GPT-5.5"], "strong": ["Opus xhigh", "GPT-5.5"]}
+    },
+    "routingByPhase": {
+      "research": {"primary": "Claude Haiku (fleet)", "secondary": "Copilot Fleet (GPT-5)", "gateway": "9Router for web"},
+      "planning": {"primary": "Claude Opus", "secondary": "Copilot GPT-5.5 (BYOK)", "gateway": "9Router fallback"},
+      "backend": {"primary": "Claude Sonnet", "secondary": "Copilot GPT-5 (BYOK)"},
+      "frontend": {"primary": "Claude Sonnet", "secondary": "Copilot GPT-5 (BYOK)"},
+      "review": {"primary": "Claude Haiku", "secondary": "Copilot GPT-4o-mini"},
+      "testing": {"primary": "Claude Haiku", "secondary": "Copilot GPT-4o-mini"},
+      "documentation": {"primary": "Claude Haiku/Fable", "secondary": "Copilot GPT-4o-mini"},
+      "integration": {"primary": "Claude Opus (Lead)"}
+    },
+    "isolation": {
+      "worktrees": "One per writer worker (isolate: true)",
+      "branches": "alethe/<session>-<worker>",
+      "sessions": "--session-id (Copilot) / --resume (Claude)",
+      "codeSovereignty": "Lead (Opus) integrates all diffs via Edit/Write",
+      "budget": "--max-ai-credits (Copilot) + budget in plan (Aletheia)",
+      "quotaMonitoring": "usage monitors Claude + Codex; Agy/Gemini via user"
+    }
+  },
+  "pendingActions": [
+    {"id": 1, "action": "Aletheia Onboarding", "command": "py scripts/orchestrate.py playbook --init -> edit -> policy set", "priority": "critical", "blocks": "All orchestration"},
+    {"id": 2, "action": "Configure GEMINI_API_KEY for Agy", "command": "setx GEMINI_API_KEY \"...\" or edit settings.json", "priority": "critical", "blocks": "Agy worker"},
+    {"id": 3, "action": "Default Budget Aletheia", "command": "py scripts/orchestrate.py policy set --max-calls 20 --max-reported-cost-usd 5", "priority": "critical", "blocks": "Cost control"},
+    {"id": 4, "action": "9Router Security", "command": "Stop -> 9router --host 127.0.0.1", "priority": "critical", "blocks": "Security"},
+    {"id": 5, "action": "Authenticate OpenCode", "command": "opencode auth login", "priority": "important", "blocks": "Tertiary worker"},
+    {"id": 6, "action": "Test BYOK Anthropic (Copilot)", "command": "COPILOT_PROVIDER_TYPE=anthropic COPILOT_PROVIDER_BASE_URL=https://api.anthropic.com COPILOT_PROVIDER_API_KEY=... copilot -p \"test\" --yolo", "priority": "important", "blocks": "Claude models in Copilot"},
+    {"id": 7, "action": "Test 9Router Gateway (Copilot)", "command": "COPILOT_PROVIDER_BASE_URL=http://127.0.0.1:20128/v1 COPILOT_PROVIDER_TYPE=openai COPILOT_MODEL=gpt-5.5 copilot -p \"test\" --yolo", "priority": "important", "blocks": "Multi-model in Copilot"},
+    {"id": 8, "action": "Configure Copilot Custom Provider in Aletheia", "command": "Add to playbooks.yaml adapters", "priority": "important", "blocks": "Native Copilot worker"},
+    {"id": 9, "action": "Full Integration Test", "command": "Plan with 2 workers (Claude + Copilot)", "priority": "important", "blocks": "Architecture validation"}
+  ],
+  "unknownUnverified": [
+    "Exact models in GitHub Copilot plan",
+    "Copilot concurrency limits (parallel sessions)",
+    "Actual AI Credits cost per model",
+    "Shared MCP servers integration",
+    "OpenCode available models",
+    "9Router models beyond GPT-5.5",
+    "KiloCode agent capabilities"
+  ]
+}

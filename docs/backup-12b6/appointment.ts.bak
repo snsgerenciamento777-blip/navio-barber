@@ -1,0 +1,423 @@
+import { z } from "zod";
+import { csrfAppointmentsWriteProcedure, csrfAppointmentsFinalizeProcedure, appointmentsReadProcedure } from "../index";
+import { TRPCError } from "@trpc/server";
+import { AppointmentStatus, CustomerStatus } from "@prisma/client";
+
+const MAX_APPOINTMENT_DAYS = 30; // D-05: Antecedência máxima 30 dias
+const MIN_APPOINTMENT_HOURS = 2; // D-04: Antecedência mínima 2 horas
+const NO_SHOW_MINUTES = 15; // D-08: No-show após 15 minutos
+
+async function validarShopDoUsuario(
+  prisma: any,
+  userId: string,
+  shopId: string,
+): Promise<void> {
+  const shop = await prisma.shop.findFirst({
+    where: { id: shopId, ownerId: userId },
+  });
+  if (!shop) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Usuário não possui acesso a esta loja",
+    });
+  }
+}
+
+export const appointmentRouter = {
+  getAvailableSlots: appointmentsReadProcedure
+    .input(
+      z.object({
+        date: z.string().datetime(),
+        professionalId: z.string(),
+        serviceId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const professional = await ctx.prisma.professional.findUnique({
+        where: { id: input.professionalId },
+      });
+      if (!professional) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Profissional não encontrado" });
+      }
+
+      await validarShopDoUsuario(ctx.prisma, ctx.session!.user.id, professional.shopId);
+
+      const date = new Date(input.date);
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      // Buscar agendamentos existentes para o profissional nesta data
+      const existing = await ctx.prisma.appointment.findMany({
+        where: {
+          professionalId: input.professionalId,
+          startAt: { gte: startOfDay, lte: endOfDay },
+          status: {
+            notIn: [AppointmentStatus.CANCELLED, AppointmentStatus.NO_SHOW],
+          },
+        },
+      });
+
+      // TODO: Implementar lógica de geração de slots baseada em:
+      // - Horário de funcionamento da loja (RG-AG-04)
+      // - Dias fechados (RG-AG-05)
+      // - Intervalo de almoço (RG-AG-06)
+      // - Duração do serviço
+      // - Slots já ocupados
+
+      return {
+        date,
+        professionalId: input.professionalId,
+        serviceId: input.serviceId,
+        availableSlots: [], // Será preenchido pela lógica de geração
+        bookedSlots: existing.map((a) => ({
+          id: a.id,
+          startAt: a.startAt,
+          endAt: a.endAt,
+          status: a.status,
+        })),
+      };
+    }),
+
+  getById: appointmentsReadProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const appointment = await ctx.prisma.appointment.findUnique({
+        where: { id: input.id },
+        include: {
+          customer: true,
+          service: true,
+          professional: true,
+        },
+      });
+      if (!appointment) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Agendamento não encontrado" });
+      }
+      await validarShopDoUsuario(ctx.prisma, ctx.session!.user.id, appointment.shopId);
+      return appointment;
+    }),
+
+  create: csrfAppointmentsWriteProcedure
+    .input(
+      z.object({
+        customerId: z.string(),
+        serviceId: z.string(),
+        professionalId: z.string(),
+        startAt: z.string().datetime(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const startAt = new Date(input.startAt);
+      const now = new Date();
+
+      // RG-AG-01: Antecedência mínima de 2 horas (D-04)
+      const minStart = new Date(now.getTime() + MIN_APPOINTMENT_HOURS * 60 * 60 * 1000);
+      if (startAt < minStart) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Antecedência mínima de ${MIN_APPOINTMENT_HOURS} horas para agendamento`,
+        });
+      }
+
+      // RG-AG-02: Antecedência máxima de 30 dias (D-05)
+      const maxStart = new Date(now.getTime() + MAX_APPOINTMENT_DAYS * 24 * 60 * 60 * 1000);
+      if (startAt > maxStart) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Antecedência máxima de ${MAX_APPOINTMENT_DAYS} dias para agendamento`,
+        });
+      }
+
+      // RG-AG-03: Verificar disponibilidade do slot (não ocupado)
+      // Buscar serviço para duração
+      const service = await ctx.prisma.service.findUnique({
+        where: { id: input.serviceId },
+      });
+      if (!service || !service.isActive) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Serviço não encontrado ou inativo",
+        });
+      }
+
+      const endAt = new Date(startAt.getTime() + service.durationMinutes * 60 * 1000);
+
+      // Verificar conflito de horário (RG-AG-03)
+      const conflict = await ctx.prisma.appointment.findFirst({
+        where: {
+          professionalId: input.professionalId,
+          status: {
+            notIn: [AppointmentStatus.CANCELLED, AppointmentStatus.NO_SHOW],
+          },
+          OR: [
+            {
+              startAt: { lt: endAt },
+              endAt: { gt: startAt },
+            },
+          ],
+        },
+      });
+
+      if (conflict) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "Horário já ocupado por outro agendamento",
+        });
+      }
+
+      // Buscar cliente
+      const customer = await ctx.prisma.customer.findUnique({
+        where: { id: input.customerId },
+      });
+      if (!customer) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Cliente não encontrado" });
+      }
+
+      await validarShopDoUsuario(ctx.prisma, ctx.session!.user.id, customer.shopId);
+
+      // RG-CL-03: Verificar se cliente está bloqueado (3+ no-shows)
+      if (customer.status === CustomerStatus.BLOCKED || customer.noShowCount >= 3) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Cliente bloqueado devido a no-shows repetidos",
+        });
+      }
+
+      // RG-CL-04: Cliente inativo (6+ meses sem atendimento) - ainda pode agendar
+      // Apenas marcar como inativo, não bloquear
+
+      const appointment = await ctx.prisma.appointment.create({
+        data: {
+          shopId: customer.shopId,
+          professionalId: input.professionalId,
+          serviceId: input.serviceId,
+          customerId: input.customerId,
+          startAt,
+          endAt,
+          status: AppointmentStatus.PENDING,
+          totalValue: service.price,
+          paymentStatus: "PENDING",
+        },
+      });
+
+      return { appointment };
+    }),
+
+  updateStatus: csrfAppointmentsWriteProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        status: z.nativeEnum(AppointmentStatus),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const appointment = await ctx.prisma.appointment.findUnique({
+        where: { id: input.id },
+      });
+      if (!appointment) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Agendamento não encontrado" });
+      }
+
+      await validarShopDoUsuario(ctx.prisma, ctx.session!.user.id, appointment.shopId);
+
+      // RG-AT-01: Ciclo de vida aguardando → em andamento → concluído
+      // Validações de transição de status
+
+      const updated = await ctx.prisma.appointment.update({
+        where: { id: input.id },
+        data: { status: input.status },
+      });
+
+      // Registrar auditoria (RG-NS-06)
+      await ctx.prisma.appointmentAuditLog.create({
+        data: {
+          appointmentId: input.id,
+          oldStatus: appointment.status,
+          newStatus: input.status,
+          reason: "Alteração manual de status",
+          source: "MANUAL",
+          changedBy: ctx.session?.user.id,
+        },
+      });
+
+      return { appointment: updated };
+    }),
+
+  cancel: csrfAppointmentsWriteProcedure
+    .input(z.object({ id: z.string(), reason: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const appointment = await ctx.prisma.appointment.findUnique({
+        where: { id: input.id },
+      });
+      if (!appointment) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Agendamento não encontrado" });
+      }
+
+      await validarShopDoUsuario(ctx.prisma, ctx.session!.user.id, appointment.shopId);
+
+      // RG-AG-07: Só pode cancelar "agendado" ou "confirmado"
+      if (
+        appointment.status !== AppointmentStatus.PENDING &&
+        appointment.status !== AppointmentStatus.CONFIRMED
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Só é possível cancelar agendamentos agendados ou confirmados",
+        });
+      }
+
+      const updated = await ctx.prisma.appointment.update({
+        where: { id: input.id },
+        data: {
+          status: AppointmentStatus.CANCELLED,
+          cancelReason: input.reason,
+        },
+      });
+
+      await ctx.prisma.appointmentAuditLog.create({
+        data: {
+          appointmentId: input.id,
+          oldStatus: appointment.status,
+          newStatus: AppointmentStatus.CANCELLED,
+          reason: input.reason || "Cancelamento manual",
+          source: "MANUAL",
+          changedBy: ctx.session?.user.id,
+        },
+      });
+
+      return { appointment: updated };
+    }),
+
+  reschedule: csrfAppointmentsWriteProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        newStartAt: z.string().datetime(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const appointment = await ctx.prisma.appointment.findUnique({
+        where: { id: input.id },
+      });
+      if (!appointment) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Agendamento não encontrado" });
+      }
+
+      await validarShopDoUsuario(ctx.prisma, ctx.session!.user.id, appointment.shopId);
+
+      // Verificar disponibilidade do novo horário (RG-AG-03)
+      const service = await ctx.prisma.service.findUnique({
+        where: { id: appointment.serviceId },
+      });
+      if (!service) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Serviço não encontrado" });
+      }
+      const endAt = new Date(input.newStartAt);
+      endAt.setMinutes(endAt.getMinutes() + service.durationMinutes);
+
+      const conflict = await ctx.prisma.appointment.findFirst({
+        where: {
+          professionalId: appointment.professionalId,
+          id: { not: appointment.id },
+          status: {
+            notIn: [AppointmentStatus.CANCELLED, AppointmentStatus.NO_SHOW],
+          },
+          OR: [
+            {
+              startAt: { lt: endAt },
+              endAt: { gt: new Date(input.newStartAt) },
+            },
+          ],
+        },
+      });
+
+      if (conflict) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "Novo horário já ocupado",
+        });
+      }
+
+      const updated = await ctx.prisma.appointment.update({
+        where: { id: input.id },
+        data: {
+          startAt: new Date(input.newStartAt),
+          endAt,
+        },
+      });
+
+      await ctx.prisma.appointmentAuditLog.create({
+        data: {
+          appointmentId: input.id,
+          oldStatus: appointment.status,
+          newStatus: appointment.status,
+          reason: "Remarcação de horário",
+          source: "MANUAL",
+          changedBy: ctx.session?.user.id,
+        },
+      });
+
+      return { appointment: updated };
+    }),
+
+  getByPeriod: appointmentsReadProcedure
+    .input(
+      z.object({
+        startDate: z.string().datetime(),
+        endDate: z.string().datetime(),
+        shopId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      await validarShopDoUsuario(ctx.prisma, ctx.session!.user.id, input.shopId);
+
+      return ctx.prisma.appointment.findMany({
+        where: {
+          shopId: input.shopId,
+          startAt: {
+            gte: new Date(input.startDate),
+            lte: new Date(input.endDate),
+          },
+        },
+        include: { customer: true, service: true, professional: true },
+        orderBy: { startAt: "asc" },
+      });
+    }),
+
+  finalizePrevious: csrfAppointmentsFinalizeProcedure
+    .input(z.object({ shopId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      await validarShopDoUsuario(ctx.prisma, ctx.session!.user.id, input.shopId);
+      const now = new Date();
+      const updated = await ctx.prisma.appointment.updateMany({
+        where: {
+          shopId: input.shopId,
+          status: AppointmentStatus.PENDING,
+          startAt: { lt: now },
+        },
+        data: { status: AppointmentStatus.COMPLETED },
+      });
+
+      return { finalizedCount: updated.count };
+    }),
+
+  getNoShowCandidates: appointmentsReadProcedure
+    .input(z.object({ shopId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      await validarShopDoUsuario(ctx.prisma, ctx.session!.user.id, input.shopId);
+      // RG-NS-01: Agendamentos com 15+ minutos de atraso
+      const now = new Date();
+      const noShowThreshold = new Date(now.getTime() - NO_SHOW_MINUTES * 60 * 1000);
+
+      return ctx.prisma.appointment.findMany({
+        where: {
+          shopId: input.shopId,
+          status: {
+            in: [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED],
+          },
+          startAt: { lt: noShowThreshold },
+        },
+      });
+    }),
+};

@@ -1,0 +1,48 @@
+﻿=== /api/manage/auth/me ===
+Entry: GET 304 bodyLen=235
+{"message":"UsuÃ¡rio carregado com sucesso.","data":{"name":"Guga Souza","function":"Administrador","slug":"soul-barber","image_url":"https://api.horadoestilo.com.br/uploads/employees/c2d6e618-f22f-4c64-981c-21b1a31979f0-avatar.webp"}}
+
+=== /api/manage/notifications ===
+Entry: GET 304 bodyLen=208
+{"message":"","data":[{"id":10766,"message":"Novo agendamento com teste pai em 05/11/26 Ã s 10:20","is_read":0,"created_at":"2026-11-04T19:38:50.000Z","type_key":"new_appointment","name":"Novo Agendamento"}]}
+
+=== /api/manage/my-profile ===
+Entry: GET 304 bodyLen=223
+{"message":"","data":{"name":"Guga Souza","email":"sns.gerenciamento777@gmail.com","image_url":"https://api.horadoestilo.com.br/uploads/employees/c2d6e618-f22f-4c64-981c-21b1a31979f0-avatar.webp","phone":"(11) 96550-1634"}}
+
+=== /api/manage/dashboard/setup-status ===
+Entry: GET 304 bodyLen=259
+{"message":"Status da configuraÃ§Ã£o carregado com sucesso.","data":{"progress":100,"completed_steps":6,"total_steps":6,"completed":true,"scheduling_ready":true,"steps":{"account":true,"company":true,"branch":true,"category":true,"service":true,"logo":true}}}
+
+=== /api/manage/fcm-token ===
+Entry: POST 200 bodyLen=38
+{"message":"Token salvo com sucesso!"}
+
+=== /api/manage/dashboard?user_id=59 ===
+Entry: GET 200 bodyLen=1500
+{"message":"","data":{"total_today":0,"total_week":0,"hours":[{"hour":"09:00","employee_id":59,"available":true,"available_for_plan":false},{"hour":"09:30","employee_id":59,"available":true,"available_for_plan":false},{"hour":"10:00","employee_id":59,"available":true,"available_for_plan":false},{"hour":"10:30","employee_id":59,"available":true,"available_for_plan":false},{"hour":"11:00","employee_id":59,"available":true,"available_for_plan":false},{"hour":"11:30","employee_id":59,"available":true,"available_for_plan":false},{"hour":"12:00","employee_id":59,"available":true,"available_for_plan":false},{"hour":"12:30","employee_id":59,"available":true,"available_for_plan":false},{"hour":"13:00","employee_id":59,"available":true,"available_for_plan":false},{"hour":"13:30","employee_id":59,"available":true,"available_for_plan":false},{"hour":"14:00","employee_id":59,"available":true,"available_for_plan":false},{"hour":"14:30","employee_id":59,"available":true,"available_for_plan":false},{"hour":"15:00","employee_id":59,"available":true,"available_for_plan":false},{"hour":"15:30","employee_id":59,"available":true,"available_for_plan":false},{"hour":"16:00","employee_id":59,"available":true,"available_for_plan":false},{"hour":"16:30","employee_id":59,"available":true,"available_for_plan":false},{"hour":"17:00","employee_id":59,"available":true,"available_for_plan":false},{"hour":"17:30","employee_id":59,"available":true,"available_for_plan":false}],"alerts":[],"total_customers":1}}
+
+=== /api/manage/employees/company/24/select ===
+Entry: GET 304 bodyLen=53
+{"message":"","data":[{"id":59,"name":"Guga Souza"}]}
+
+=== /api/manage/appointments ===
+Entry: GET 200 bodyLen=1054
+{"message":"","data":{"summary":{"total_appointments":0,"expected_revenue":0},"days":[{"date":"2026-11-05","open_time":"09:00:00","close_time":"18:00:00","total_appointments":0,"expected_revenue":0,"appointments":[{"id":14004,"customer_id":3813,"status":"cancelado_barbeiro","name":"teste pai","user_image":"uploads/employees/c2d6e618-f22f-4c64-981c-21b1a31979f0-avatar.webp","start_time":"2026-11-05T10:20:00","end_time":"2026-11-05T10:35:00","total_value":40,"services":["Corte Navalha"],"clientTrust":5,"totalAppointments":1,"start":"2026-11-05T10:20:00","end":"2026-11-05T10:35:00","duration_minutes":15,"duration_label":"15min","outside_working_hours":false}],"absences":[],"free_spaces":[{"start":"2026-11-05T09:00:00","end":"2026-11-05T10:20:00","duration_minutes":80,"duration_label":"1h 20min"},{"start":"2026-11-05T10:35:00","end":"2026-11-05T18:00:00","duration_minutes":445,"duration_label":"7h 25min"}],"employee_id":56,"schedule_exception":false,"lunchPeriod":{"start_time":null,"end_time":null,"duration_minutes":0,"duration_label":""}}]}}
+
+=== /api/manage/appointments/finalize-previous ===
+Entry: PUT 200 bodyLen=51
+{"message":"Agendamentos finalizados com sucesso."}
+
+=== /api/manage/employees/company/24 ===
+Entry: GET 304 bodyLen=53
+{"message":"","data":[{"id":59,"name":"Guga Souza"}]}
+
+=== /api/manage/employee-absences ===
+Entry: GET 304 bodyLen=24
+{"message":"","data":[]}
+
+=== /api/manage/customers?company_id=24 ===
+Entry: GET 304 bodyLen=169
+{"message":"","data":[{"id":3813,"full_name":"teste pai","is_active":1,"email":"teste.test@gmail.com","phone":"(11) 99786-4555","criado_em":"2026-11-04T19:28:43.000Z"}]}
+

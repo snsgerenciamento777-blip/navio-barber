@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "strategy": "economy",
+  "workers": [
+    {
+      "id": "worker-copilot",
+      "provider": "custom",
+      "command": "copilot",
+      "mode": "write",
+      "cwd": ".",
+      "task": "Create a simple CONTRIBUTING.md file with contribution guidelines for Navio Barber 2.0"
+    }
+  ]
+}

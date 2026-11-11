@@ -1,0 +1,299 @@
+# MAPA_FUNCIONAL_HORA_DO_ESTILO.md
+
+Mapa Funcional — Aplicativo de Referência Hora do Estilo
+Navio Barber 2.0 | Missão 04 — Engenharia Reversa e Mapeamento Funcional
+Data: 2026-11-06 | Operador: Kilo Code | Orquestrador: Aletheia v23
+
+---
+
+## 1. Visão Geral
+
+Este documento mapeia funcionalmente o aplicativo de referência Hora do Estilo, com base em:
+
+- **README do Navio Barber 2.0** (visão de produto, 6 módulos, stack, roadmap)
+- **7 entregáveis da Missão 03** (inventários de telas, fluxos, regras de negócio, requisitos MVP)
+- **Arquivo HAR** `Reverse/01_Hora_do_Estilo_Admin.har` (108 entries, 16 endpoints únicos da API do Hora do Estilo, todos com corpos de resposta capturados incluindo entradas de status=304 em cache)
+
+Cada funcionalidade é classificada em um dos quatro níveis de evidência:
+
+| Classificação | Significado |
+|---------------|-------------|
+| **CONFIRMADA** | Evidência direta no HAR (endpoint + corpo de resposta) ou em documento da Missão 03 com correspondência HAR |
+| **INFERÊNCIA** | Interpretação plausível do domínio de barbearia, sem respaldo direto no HAR |
+| **DESCONHECIDA** | Sem evidência suficiente para determinar funcionamento |
+| **PENDENTE DE EVIDÊNCIA** | Item identificado como necessário, aguardando confirmação do Comandante ou investigação adicional |
+
+**Regra fundamental:** ausência de evidência no HAR não significa ausência da funcionalidade no aplicativo original. O HAR captura apenas uma sessão de admin, não todo o sistema.
+
+---
+
+## 2. Mapa de Módulos e Funcionalidades
+
+### 2.1 Módulo: Autenticação e Perfil do Usuário
+
+| Funcionalidade | Classificação | Evidência | Observações |
+|----------------|--------------|-----------|-------------|
+| Login do barbeiro (email/senha) | CONFIRMADA | `GET /auth/me` → `{"message":"Usuário carregado com sucesso.","data":{"name":"Guga Souza","function":"Administrador","slug":"soul-barber","image_url":"..."}}` | Confirma retorno de nome, função, slug e imagem; método (email/senha vs OAuth) não confirmado |
+| Logout / fim de sessão | DESCONHECIDA | Sem endpoint específico no HAR | — |
+| Recuperação de senha | DESCONHECIDA | Sem endpoint no HAR | Tela pendente nos documentos M03 |
+| Perfil do barbeiro logado (my-profile) | CONFIRMADA | `GET /my-profile` → `{"data":{"name":"Guga Souza","email":"sns.gerenciamento777@gmail.com","image_url":"...","phone":"(11) 96550-1634"}}` | Confirma campos nome, email, telefone, image_url |
+| Perfil público do profissional | CONFIRMADA | Endpoint `/uploads/employees/{id}-avatar.webp` existe (imagem binária, body capturado) | Confirma existência de fotos de perfil |
+| Cadastro de cliente (identificação por telefone) | CONFIRMADA | `GET /customers?company_id=24` → `{"data":[{"id":3813,"full_name":"teste pai","is_active":1,"email":"teste.test@gmail.com","phone":"(11) 99786-4555","criado_em":"2026-11-04T19:28:43.000Z"}]}` | Estrutura de cliente confirmada: id, full_name, is_active, email, phone, criado_em |
+| Login/cadastro de cliente | DESCONHECIDA | HAR é do lado admin; nenhum endpoint público capturado | Tela pendente nos documentos M03 |
+
+**Endpoints HAR relacionados:** `/auth/me`, `/my-profile`, `/customers?company_id=24`, `/uploads/employees/{id}-avatar.webp`
+
+---
+
+### 2.2 Módulo: Agenda e Agendamentos
+
+| Funcionalidade | Classificação | Evidência | Observações |
+|----------------|--------------|-----------|-------------|
+| Visualização de agenda (calendário) | CONFIRMADA | `GET /appointments?start_date=&end_date=&user_id=` → dias com `open_time`, `close_time`, `appointments[]`, `free_spaces[]`, `absences[]`, `employee_id`, `schedule_exception`, `lunchPeriod` | Confirma estrutura de dia da agenda com horários livres/ocupados |
+| Criação de novo agendamento | DESCONHECIDA | Endpoint `/appointments` existe, corpo não capturado para POST | Não há entry POST /appointments com body no HAR |
+| Seleção de horário disponível | CONFIRMADA | `GET /appointments?...` → `hours[]` com `available`, `available_for_plan`; `free_spaces[]` com start/end/duration | Confirma slots disponíveis e ocupados |
+| Confirmação de agendamento | DESCONHECIDA | Sem dado de confirmação no HAR | — |
+| Finalização de agendamentos anteriores | **CONFIRMADA** | `PUT /appointments/finalize-previous` → `{"message":"Agendamentos finalizados com sucesso!"}` | Confirma operação de lote/finalização |
+| Cancelamento de agendamento | CONFIRMADA (parcial) | `GET /appointments` → appointment com `status:"cancelado_barbeiro"` | Confirma que cancelamento existe como status; endpoint de cancelamento não capturado |
+| Remarcação de agendamento | INFERÊNCIA | Sem endpoint de remarcação com corpo no HAR | — |
+| Ciclo de vida do agendamento | CONFIRMADA (parcial) | `PUT /appointments/finalize-previous` confirma estado final; `GET /appointments` mostra status `"cancelado_barbeiro"` | Estados intermediários (agendado→confirmado→em_andamento→concluído) são inferência |
+| Consulta de agendamentos por período | CONFIRMADA | `GET /appointments?start_date=&end_date=&user_id=` → corpo com `days[]` filtrado por data | Confirma consulta por período |
+
+**Endpoints HAR relacionados:** `/appointments`, `/appointments/finalize-previous`
+
+---
+
+### 2.3 Módulo: Gestão de Clientes (CRM)
+
+| Funcionalidade | Classificação | Evidência | Observações |
+|----------------|--------------|-----------|-------------|
+| Cadastro de cliente | CONFIRMADA | `GET /customers?company_id=24` → `{"data":[{"id":3813,"full_name":"teste pai","is_active":1,"email":"teste.test@gmail.com","phone":"(11) 99786-4555","criado_em":"2026-11-04T19:28:43.000Z"}]}` | Estrutura de cliente confirmada: id, full_name, is_active, email, phone, criado_em |
+| Edição de cliente | DESCONHECIDA | Sem dado específico | — |
+| Visualização de perfil do cliente | CONFIRMADA | `GET /customers?company_id=24` → dados do cliente com id, full_name, is_active, email, phone, criado_em | Confirma campos do perfil do cliente |
+| Histórico de atendimentos do cliente | DESCONHECIDA | `/subscription/me` tem `history` vazio (histórico de assinatura, não de atendimentos) | — |
+| Unicidade de telefone | INFERÊNCIA | Endpoint `/customers` existe (base de clientes), corpo capturado | Não há evidência de validação de unicidade na resposta |
+| Status do cliente (novo/ativo/inativo/bloqueado) | CONFIRMADA (parcial) | `GET /customers?company_id=24` → `is_active:1` | Confirma campo is_active; outros status não estão na resposta |
+| Pontos de fidelidade | DESCONHECIDA | Sem dado de fidelidade no HAR | Excluído do MVP (RF-EX-02) |
+| Bloqueio por no-shows | INFERÊNCIA | Sem dado de no-show no HAR | — |
+| Inatividade por ausência | INFERÊNCIA | Sem dado de inatividade no HAR | — |
+
+**Endpoints HAR relacionados:** `/customers?company_id=24`
+
+---
+
+### 2.4 Módulo: Serviços e Profissionais
+
+| Funcionalidade | Classificação | Evidência | Observações |
+|----------------|--------------|-----------|-------------|
+| Catálogo de serviços | CONFIRMADA (parcial) | `GET /appointments` → appointment com `services:["Corte Navalha"]` | Confirma que serviços existem como array de nomes; catálogo completo não capturado |
+| Cadastro/edição de serviço | DESCONHECIDA | Sem dado de serviços no HAR | — |
+| Duração mínima de serviço (15 min) | CONFIRMADA (parcial) | `GET /appointments` → `duration_minutes:15, duration_label:"15min"` | Confirma duração de 15 min observada; mínimo não confirmado |
+| Preço e comissão por serviço | CONFIRMADA (parcial) | `GET /appointments` → `total_value:40` | Confirma valor total observado; comissão por serviço não está no HAR |
+| Serviço ativo/inativo | INFERÊNCIA | Sem dado de status de serviço no HAR | — |
+| Cadastro de profissionais | CONFIRMADA | `GET /employees/company/24` → `{"data":[{"id":59,"name":"Guga Souza"}]}` | Confirma estrutura de profissional: id, name |
+| Horário individual do profissional | DESCONHECIDA | Sem dado de horário individual no HAR | — |
+| Foto de perfil do profissional | CONFIRMADA | Endpoint `/uploads/employees/{id}-avatar.webp` existe (imagem binária, body capturado) | Confirma existência de fotos |
+| Especialidades do profissional | DESCONHECIDA | Sem dado específico | — |
+
+**Endpoints HAR relacionados:** `/employees/company/24`, `/employees/company/24/select`, `/uploads/employees/{id}-avatar.webp`
+
+---
+
+### 2.5 Módulo: Planos e Assinaturas
+
+| Funcionalidade | Classificação | Evidência | Observações |
+|----------------|--------------|-----------|-------------|
+| Catálogo de planos | **CONFIRMADA** | `GET /subscriptions/plans` → planos com id, nome, preço, frequência, tipo de frequência, max_branches, max_employees, benefícios itemizados | Exemplo: plano "Start" a R$ 50,00/mês, 6 benefícios |
+| Consulta da assinatura do usuário | **CONFIRMADA** | `GET /subscription/me` → plano ativo "Essencial" (grátis), período, pagamento, grace period, ações permitidas, limites de uso | Exemplo: id=46, status=active, max_branches=1, max_employees=3 |
+| Limites de uso por plano | **CONFIRMADA** | `GET /subscription/me` → `usage.branches` e `usage.employees` com used/limit | Exemplo: branches used=1/limit=1, employees used=0/limit=3 |
+| Checkout/upgrade de plano | **CONFIRMADA** | `POST /subscriptions/checkout-preview/5` → operation_type, plan_id, preço, rateio (prorated), payment_required, pix_available, credit_available | Exemplo: upgrade para plano "Start", R$ 48,33 com rateio |
+| Pagamento online (PIX, cartão) | **CONFIRMADA** | Mercado Pago `/payment_methods/search` + checkout-preview com `pix_available: true`, `credit_available: true` | Gateway: Mercado Pago |
+| Pacotes e assinaturas recorrentes | **CONFIRMADA** | `/subscription/me` confirma assinatura com período e renovação | Plano "Essencial" com frequency=30 days |
+
+**Endpoints HAR relacionados:** `/subscription/me`, `/subscriptions/plans`, `/subscriptions/checkout-preview/5`, Mercado Pago `/v1/payment_methods/search`, `/v1/devices/widgets`
+
+---
+
+### 2.6 Módulo: Caixa e Financeiro
+
+| Funcionalidade | Classificação | Evidência | Observações |
+|----------------|--------------|-----------|-------------|
+| Registro de pagamento (online) | **CONFIRMADA (parcial)** | Mercado Pago integrado, checkout-preview confirma pagamento exigido | PIX e cartão confirmados; dinheiro e voucher são inferência |
+| Registro de recebimento (presencial) | INFERÊNCIA | Sem dado de recebimento presencial no HAR | Dinheiro/cartão presencial são inferência de domínio |
+| Comissão do barbeiro | **CONFIRMADA (parcial)** | Plano tem `max_employees` e preço; comissão por serviço não está no HAR | `GET /appointments` mostra `total_value:40` (valor do atendimento) |
+| Fluxo de caixa (dia/semana/mês) | DESCONHECIDA | Sem endpoint de caixa/financeiro no HAR | — |
+| Formas de pagamento | **CONFIRMADA (parcial)** | PIX e cartão de crédito confirmados via Mercado Pago/checkout-preview | Dinheiro e voucher não estão no HAR |
+
+**Endpoints HAR relacionados:** Mercado Pago `/v1/payment_methods/search`, `/v1/devices/widgets`, `/subscriptions/checkout-preview/5`
+
+---
+
+### 2.7 Módulo: Notificações
+
+| Funcionalidade | Classificação | Evidência | Observações |
+|----------------|--------------|-----------|-------------|
+| Registro de token push (FCM) | **CONFIRMADA** | `POST /fcm-token` → `{"message":"Token salvo com sucesso!"}` | Confirma integração com Firebase Cloud Messaging |
+| Confirmação automática de agendamento | CONFIRMADA (parcial) | `GET /notifications` → `{"data":[{"type_key":"new_appointment","name":"Novo Agendamento",...}]}` | Confirma notificação de novo agendamento; disparo/conteúdo completo são inferência |
+| Lembrete de atendimento | INFERÊNCIA | `/fcm-token` confirma mecanismo de push; lembrete automático é inferência | — |
+| Notificação de cancelamento/reagendamento | INFERÊNCIA | Sem dado específico no HAR | — |
+| Notificações configuráveis por tipo | **CONFIRMADA (parcial)** | `/fcm-token` confirma mecanismo; tipos configuráveis são inferência | — |
+| WhatsApp Business API | DESCONHECIDA | Sem endpoint de WhatsApp no HAR | Tela pendente nos documentos M03 |
+| Email/SMS | DESCONHECIDA | Sem endpoint de email/SMS no HAR | — |
+
+**Endpoints HAR relacionados:** `/fcm-token`
+
+---
+
+### 2.8 Módulo: Configurações da Barbearia
+
+| Funcionalidade | Classificação | Evidência | Observações |
+|----------------|--------------|-----------|-------------|
+| Dados do estabelecimento (nome, endereço, telefone, logo) | CONFIRMADA (parcial) | Página `/dashboard/settings/profile` capturada; `GET /dashboard/setup-status` → `steps:{account:true,company:true,branch:true,category:true,service:true,logo:true}` | Confirma que configurações de estabelecimento existem; dados específicos não capturados |
+| Horário de funcionamento por dia da semana | CONFIRMADA (parcial) | `GET /appointments?...` → `open_time:"09:00:00", close_time:"18:00:00"` por dia | Confirma horário de funcionamento observado; estrutura completa por dia não capturada |
+| Dia fechado (sem slots) | CONFIRMADA (parcial) | `GET /appointments` → `schedule_exception:false` | Campo `schedule_exception` confirmado na resposta; conceito de dia fechado é inferência |
+| Preferências de notificação | **CONFIRMADA (parcial)** | `/fcm-token` confirma mecanismo de push | Tipos configuráveis são inferência |
+| Perfil pessoal do barbeiro | CONFIRMADA | `GET /my-profile` → `{"data":{"name":"Guga Souza","email":"sns.gerenciamento777@gmail.com","image_url":"...","phone":"(11) 96550-1634"}}` | Confirma campos do perfil: name, email, phone, image_url |
+
+**Endpoints HAR relacionados:** Página `/dashboard/settings/profile` (capturada, corpo não extraído), `/dashboard/setup-status`, `/my-profile`
+
+---
+
+### 2.9 Módulo: Relatórios e Analytics
+
+| Funcionalidade | Classificação | Evidência | Observações |
+|----------------|--------------|-----------|-------------|
+| Dashboard com resumo do dia | CONFIRMADA (parcial) | `GET /dashboard?user_id=59` → `{"data":{"total_today":0,"total_week":0,"alerts":[],"total_customers":1}}` | Confirma cards de resumo (total_today, total_week, total_customers, alerts) |
+| Relatórios simples (atendimentos, receita, comissões) | DESCONHECIDA | Sem endpoint de relatórios no HAR | — |
+| Exportação CSV | DESCONHECIDA | Sem dado de exportação no HAR | — |
+| Taxa de comparecimento (no-show rate) | DESCONHECIDA | Sem dado de no-show no HAR | — |
+| Analytics preditivos | DESCONHECIDA | Sem dado de analytics no HAR | Excluído do MVP (Fase 2+) |
+
+**Endpoints HAR relacionados:** `/dashboard?user_id=59`, `/dashboard/setup-status`
+
+---
+
+### 2.10 Módulo: Ausências e Pacotes Vendidos
+
+| Funcionalidade | Classificação | Evidência | Observações |
+|----------------|--------------|-----------|-------------|
+| Ausências de profissionais (férias, folga) | CONFIRMADA | `GET /employee-absences?company_id=24&period=upcoming` → `{"message":"","data":[]}` | Confirma endpoint e estrutura (data array); lista vazia no momento da captura |
+| Pacotes vendidos | CONFIRMADA | `GET /packages-sold?company_id=24&user_id=59` → `{"message":"Pacotes vendidos recuperados.","data":[]}` | Confirma endpoint e estrutura (data array); lista vazia no momento da captura |
+| Seleção de funcionário/empresa | CONFIRMADA | `GET /employees/company/24/select` → `{"data":[{"id":59,"name":"Guga Souza"}]}` | Confirma seleção de funcionário com id e name |
+
+**Endpoints HAR relacionados:** `/employee-absences`, `/packages-sold`, `/employees/company/24/select`
+
+---
+
+### 2.11 Módulo: Notificações do Sistema
+
+| Funcionalidade | Classificação | Evidência | Observações |
+|----------------|--------------|-----------|-------------|
+| Lista de notificações | CONFIRMADA | `GET /notifications` → `{"data":[{"id":10766,"message":"Novo agendamento com teste pai em 05/11/26 às 10:20","is_read":0,"created_at":"2026-11-04T19:38:50.000Z","type_key":"new_appointment","name":"Novo Agendamento"}]}` | Confirma estrutura: id, message, is_read, created_at, type_key, name |
+| Status de setup do dashboard | CONFIRMADA | `GET /dashboard/setup-status` → `{"data":{"progress":100,"completed_steps":6,"total_steps":6,"completed":true,"scheduling_ready":true,"steps":{...}}}` | Confirma progress, completed_steps, total_steps, completed, scheduling_ready, steps |
+
+**Endpoints HAR relacionados:** `/notifications`, `/dashboard/setup-status`
+
+---
+
+## 3. Perfis e Permissões
+
+| Perfil | Permissões | Classificação | Evidência |
+|--------|-----------|--------------|-----------|
+| Barbeiro (profissional) | Própria agenda, clientes, atendimentos, serviços | CONFIRMADA (parcial) | `GET /auth/me` → `function:"Administrador"`; `GET /employees` → `id,name` |
+| Admin/dono da barbearia | Configurações, cadastro de profissionais, relatórios consolidados | CONFIRMADA (parcial) | `GET /auth/me` → `function:"Administrador"`; setup-status com steps de company, branch |
+| Cliente (público) | Busca, perfil do profissional, agendamento, meus agendamentos | DESCONHECIDA | HAR é do lado admin; nenhum fluxo público capturado |
+| Cliente (logado) | Perfil, histórico, pontos de fidelidade | DESCONHECIDA | Sem dado de cliente logado no HAR |
+
+**Controle de acesso por papel (RBAC):** INFERÊNCIA — não há endpoint de papel/permissão capturado no HAR.
+
+---
+
+## 4. Jornada por Tipo de Usuário
+
+### 4.1 Jornada do Barbeiro (lado admin — parcialmente confirmada pelo HAR)
+
+1. **Login** → `/auth/me` (**CONFIRMADA** — corpo capturado com name, function, slug, image_url)
+2. **Dashboard** → `/dashboard?user_id=59` (**CONFIRMADA (parcial)** — corpo capturado com total_today, total_week, total_customers, alerts, hours[])
+3. **Configurações** → Página `/dashboard/settings/profile` (DESCONHECIDA — corpo não extraído); `/dashboard/setup-status` (**CONFIRMADA** — corpo capturado com progress, steps)
+4. **Agenda** → `/appointments` (**CONFIRMADA** — corpo capturado com days[], appointments[], free_spaces[], open_time, close_time)
+5. **Novo agendamento** → `/appointments` (DESCONHECIDA — corpo não capturado para POST)
+6. **Finalização** → `PUT /appointments/finalize-previous` (**CONFIRMADA**)
+7. **Cadastro de clientes** → `/customers?company_id=24` (**CONFIRMADA** — corpo capturado com id, full_name, is_active, email, phone, criado_em)
+8. **Cadastro de profissionais** → `/employees/company/24` (**CONFIRMADA** — corpo capturado com id, name)
+9. **Planos/assinaturas** → `/subscription/me`, `/subscriptions/plans` (**CONFIRMADA**)
+10. **Notificações push** → `POST /fcm-token` (**CONFIRMADA**)
+
+### 4.2 Jornada do Cliente (lado público — não capturada pelo HAR)
+
+1. **Descoberta** → Página pública inicial (DESCONHECIDA — sem endpoint público no HAR)
+2. **Perfil do profissional** → CLI-PERFIL-01 (DESCONHECIDA)
+3. **Seleção de serviço** → CLI-SERVICO-01 (DESCONHECIDA)
+4. **Seleção de horário** → CLI-HORARIO-01 (DESCONHECIDA)
+5. **Identificação** → CLI-IDENTIFICACAO-01/02 (DESCONHECIDA)
+6. **Confirmação** → CLI-CONFIRMACAO-01 (DESCONHECIDA)
+7. **Sucesso** → CLI-SUCESSO-01 (DESCONHECIDA)
+8. **Meus agendamentos** → CLI-MEUS-AGENDAMENTOS-01/02 (DESCONHECIDA)
+9. **Cancelamento/remarcação** → CLI-CANCELAR-01 / CLI-REMARCAR-01 (INFERÊNCIA — sem endpoint no HAR)
+
+---
+
+## 5. Fluxos de Agendamento e Gestão de Horários
+
+| Fluxo | Classificação | Endpoint HAR | Observações |
+|-------|--------------|--------------|-------------|
+| Consulta de disponibilidade | CONFIRMADA | `/appointments?start_date=&end_date=&user_id=` | Corpo capturado com hours[], free_spaces[], available flags |
+| Criação de agendamento | DESCONHECIDA | `/appointments` | Corpo não capturado para POST |
+| Confirmação de agendamento | DESCONHECIDA | Sem endpoint específico | — |
+| Finalização de agendamentos | **CONFIRMADA** | `PUT /appointments/finalize-previous` | Resposta capturada |
+| Cancelamento de agendamento | CONFIRMADA (parcial) | `/appointments` | Status `"cancelado_barbeiro"` observado nos dados |
+| Remarcação de agendamento | INFERÊNCIA | Sem endpoint com corpo | — |
+| No-show (ausência) | INFERÊNCIA | Sem dado de no-show no HAR | — |
+| Horário de funcionamento | CONFIRMADA (parcial) | `/appointments?...` | `open_time:"09:00:00", close_time:"18:00:00"` observados por dia |
+
+---
+
+## 6. Integrações e APIs Externas
+
+| Integração | Classificação | Endpoint/Evidência | Observações |
+|------------|--------------|-------------------|-------------|
+| Mercado Pago (gateway de pagamento) | **CONFIRMADA** | `api.mercadopago.com/v1/payment_methods/search`, `/v1/devices/widgets`, `/v2/security.js`, `sdk.mercadopago.com/js/v2` | PIX e cartão confirmados; fingerprint de dispositivo |
+| Firebase Cloud Messaging (push notifications) | **CONFIRMADA** | `POST /fcm-token` → `{"message":"Token salvo com sucesso!"}` | Registro de token de dispositivo |
+| Angular Service Worker | CONFIRMADA | `/ngsw.json` (3x capturado, corpo com configuração de cache/PWA) | Configuração de PWA capturada |
+| WhatsApp Business API | DESCONHECIDA | Sem endpoint no HAR | Tela pendente nos documentos M03 |
+| Email/SMS | DESCONHECIDA | Sem endpoint no HAR | — |
+
+---
+
+## 7. Tabela de Classificação por Módulo
+
+| Módulo | CONFIRMADA | CONFIRMADA (parcial) | INFERÊNCIA | DESCONHECIDA | PENDENTE | Total |
+|--------|-----------|---------------------|------------|--------------|----------|-------|
+| Autenticação e Perfil | 4 | 0 | 0 | 3 | 0 | 7 |
+| Agenda e Agendamentos | 4 | 2 | 1 | 2 | 0 | 9 |
+| Gestão de Clientes | 2 | 1 | 3 | 3 | 0 | 9 |
+| Serviços e Profissionais | 2 | 3 | 1 | 3 | 0 | 9 |
+| Planos e Assinaturas | 5 | 0 | 0 | 0 | 0 | 5 |
+| Caixa e Financeiro | 0 | 3 | 1 | 1 | 0 | 5 |
+| Notificações | 1 | 2 | 2 | 2 | 0 | 7 |
+| Configurações | 1 | 4 | 0 | 0 | 0 | 5 |
+| Relatórios e Analytics | 0 | 1 | 0 | 4 | 0 | 5 |
+| Ausências e Pacotes | 3 | 0 | 0 | 0 | 0 | 3 |
+| Notificações do Sistema | 2 | 0 | 0 | 0 | 0 | 2 |
+| Perfis e Permissões | 0 | 2 | 0 | 2 | 0 | 4 |
+| Jornada do Barbeiro | 7 | 1 | 0 | 2 | 0 | 10 |
+| Jornada do Cliente | 0 | 0 | 1 | 8 | 0 | 9 |
+| Fluxos de Agendamento | 2 | 2 | 2 | 2 | 0 | 8 |
+| Integrações e APIs | 3 | 0 | 0 | 2 | 0 | 5 |
+| **Total** | **36** | **20** | **11** | **33** | **0** | **100** |
+
+---
+
+## 8. Regras do Comandante Observadas
+
+- **Não copiar código/marca/identidade do "Hora do Estilo"**: Este mapa é uma referência funcional, não uma cópia. O Navio Barber 2.0 manterá identidade própria.
+- **Não implementar às cegas**: Todas as funcionalidades aqui mapeadas têm classificação de evidência; nada será implementado sem confirmação.
+- **Não declarar concluído sem verificar**: Cada item foi classificado com base nas evidências disponíveis.
+
+---
+
+**Próximo passo:** Este mapa serve de base para os demais entregáveis da Missão 04 (`MATRIZ_TELAS_E_FLUXOS.md`, `MATRIZ_REGRAS_DE_NEGOCIO.md`, `LACUNAS_EVIDENCIAS_PENDENTES.md`, `RELATORIO_MISSAO_04.md`).

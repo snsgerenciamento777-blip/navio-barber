@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "strategy": "economy",
+  "workers": [
+    {
+      "id": "claude-teste-simples",
+      "provider": "claude",
+      "mode": "write",
+      "cwd": ".",
+      "task": "Criar arquivo TESTE_INTEGRACAO.md com a mensagem: 'Integração Kilo → Aletheia → Claude Code funcionando!'"
+    }
+  ]
+}

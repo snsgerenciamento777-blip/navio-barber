@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { hashPassword, verifyPassword, verifyPasswordWithMigration } from "./password";
+import { hashPassword, verifyPassword, verifyPasswordWithMigration } from "./password.ts";
 import { scrypt, randomBytes } from "crypto";
 import { promisify } from "util";
 

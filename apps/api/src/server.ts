@@ -19,12 +19,16 @@ export function toHeaders(incomingHeaders: http.IncomingHttpHeaders): Headers {
   return headers;
 }
 
+export function isHealthPath(url: string | undefined): boolean {
+  const pathname = (url ?? "/").split("?")[0]?.replace(/\/+$/, "") || "/";
+  return pathname === "/health" || pathname === "/healthz";
+}
+
 export function createRequestListener(
   trpcHandler: http.RequestListener,
 ): http.RequestListener {
   return (req, res) => {
-    const url = req.url ?? "";
-    if (url === "/health" || url === "/healthz") {
+    if (isHealthPath(req.url)) {
       res.writeHead(200, { "content-type": "application/json" });
       res.end(JSON.stringify({ ok: true, service: "navio-barber-api" }));
       return;

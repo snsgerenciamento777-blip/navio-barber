@@ -74,7 +74,7 @@ describe("API HTTP server", () => {
     expect(typeof trpcHandler).toBe("function");
   });
 
-  it("serves /health with 200 and JSON", async () => {
+  it("GET /health returns 200 and JSON", async () => {
     const server = createApiServer();
     const res = await request(server, "/health");
     expect(res.status).toBe(200);
@@ -82,7 +82,7 @@ describe("API HTTP server", () => {
     expect(JSON.parse(res.body)).toEqual({ ok: true, service: "navio-barber-api" });
   });
 
-  it("serves /healthz with 200 and JSON", async () => {
+  it("GET /healthz returns 200 and JSON", async () => {
     const server = createApiServer();
     const res = await request(server, "/healthz");
     expect(res.status).toBe(200);
@@ -90,11 +90,46 @@ describe("API HTTP server", () => {
     expect(JSON.parse(res.body)).toEqual({ ok: true, service: "navio-barber-api" });
   });
 
+  it("GET /health with query string returns 200 and JSON (not forwarded to tRPC)", async () => {
+    const trpcHandler = vi.fn((req: http.IncomingMessage, res: http.ServerResponse) => {
+      res.writeHead(404);
+      res.end("trpc");
+    });
+    const server = http.createServer(createRequestListener(trpcHandler));
+    const res = await request(server, "/health?probe=1");
+    expect(res.status).toBe(200);
+    expect(JSON.parse(res.body)).toEqual({ ok: true, service: "navio-barber-api" });
+    expect(trpcHandler).not.toHaveBeenCalled();
+  });
+
+  it("GET /healthz with query string returns 200 and JSON (not forwarded to tRPC)", async () => {
+    const trpcHandler = vi.fn((req: http.IncomingMessage, res: http.ServerResponse) => {
+      res.writeHead(404);
+      res.end("trpc");
+    });
+    const server = http.createServer(createRequestListener(trpcHandler));
+    const res = await request(server, "/healthz?check=true");
+    expect(res.status).toBe(200);
+    expect(JSON.parse(res.body)).toEqual({ ok: true, service: "navio-barber-api" });
+    expect(trpcHandler).not.toHaveBeenCalled();
+  });
+
   it("delegates tRPC routes to the tRPC handler (not health)", async () => {
+    const trpcHandler = vi.fn((req: http.IncomingMessage, res: http.ServerResponse) => {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ result: { data: { ok: true } } }));
+    });
+    const server = http.createServer(createRequestListener(trpcHandler));
+    const res = await request(server, "/trpc/some.procedure");
+    expect(trpcHandler).toHaveBeenCalledTimes(1);
+    expect(res.status).toBe(200);
+  });
+
+  it("unknown routes are delegated to tRPC and keep appropriate behavior", async () => {
     const server = createApiServer();
     const res = await request(server, "/nonexistent.procedure");
-    // tRPC responds (e.g. 404/400/405 JSON error) rather than crashing with "not a function"
+    // tRPC responds with its own error/handling (not health JSON, not crash)
     expect(res.status).toBeGreaterThanOrEqual(400);
-    expect(res.body.length).toBeGreaterThan(0);
+    expect(res.body).not.toContain('"service":"navio-barber-api"');
   });
 });

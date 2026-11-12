@@ -37,9 +37,9 @@ Use `.env.example` como base. **Nunca** commitar segredos.
 | Variável | Onde | Descrição |
 |---|---|---|
 | `DATABASE_URL` | API, Web (server-side conforme uso), Prisma | Postgres com SSL |
-| `BETTER_AUTH_SECRET` | API/Web (pacote auth) | ≥ 32 chars; `openssl rand -base64 32` |
-| `BETTER_AUTH_URL` | Web/API | **Origem pública** do frontend (ex.: `https://staging.seudominio.com`) |
-| `NODE_ENV` | Todos | `production` em homologação/prod |
+| `BETTER_AUTH_SECRET` | API/Web (pacote auth) | **Obrigatório e >= 32 caracteres** (validação em `packages/auth`). Gerar com alta entropia: `openssl rand -base64 32`. Segredos curtos/baixa entropia fazem o processo falhar no startup. |
+| `BETTER_AUTH_URL` | Web/API | **Obrigatório na prática para produção (origem pública HTTPS do frontend).** `packages/auth` define `baseURL: process.env.BETTER_AUTH_URL!` (não há fallback/validação explícita como no secret). Em produção, **ausência** pode causar geração incorreta de URLs/callbacks/cookies/origens pelo Better Auth. Configurar como `https://<dominio-publico-do-frontend>`. |
+| `NODE_ENV` | Todos | `production` em homologação/prod (habilita cookies `Secure` no Better Auth) |
 
 ### Recomendadas (deploy)
 | Variável | Onde | Descrição |

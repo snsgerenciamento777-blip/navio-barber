@@ -44,10 +44,10 @@ Use `.env.example` como base. **Nunca** commitar segredos.
 ### Recomendadas (deploy)
 | Variável | Onde | Descrição |
 |---|---|---|
-| `NEXT_PUBLIC_APP_URL` | Web | Mesma origem pública (CORS do proxy tRPC) |
-| `NEXT_PUBLIC_API_URL` | Web | URL interna/pública da API alcançável pelo **servidor** Next (ex.: `https://api-staging.seudominio.com` ou URL privada) |
-| `API_URL` | Web (server) | Alternativa a `NEXT_PUBLIC_API_URL` |
-| `PORT` | API | Porta do processo (default 3001) |
+| `NEXT_PUBLIC_APP_URL` | Web | Mesma origem pública HTTPS do frontend (usada no proxy tRPC e deve coincidir com `BETTER_AUTH_URL`) |
+| `API_URL` | Web (server) | URL da API tRPC alcançável pelo **servidor** Next.js para o proxy `/api/trpc/*` (ex.: `https://navio-barber-api.onrender.com`). **Preferencial**. Não é lida pelo browser (o cliente usa `/api/trpc`). |
+| `NEXT_PUBLIC_API_URL` | Web | Fallback legado do proxy server-side; manter por compatibilidade se já configurado. Evite usá-la para chamadas diretas do browser. |
+| `PORT` | API | Porta do processo (default 3001; Render injeta automaticamente) |
 | `HOST` | API | Bind (default `0.0.0.0` em container) |
 
 ### Opcionais

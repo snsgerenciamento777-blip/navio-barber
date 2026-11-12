@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || "http://localhost:3001";
+// Server-side target for the tRPC proxy. Prefer server-only vars; keep
+// NEXT_PUBLIC_API_URL as fallback for compatibility with existing env setups.
+// Do not point the browser tRPC client directly at this URL (see src/lib/trpc.ts).
+const API_URL =
+  process.env.API_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  "http://localhost:3001";
 const ALLOWED_ORIGIN =
   process.env.NEXT_PUBLIC_APP_URL ||
   process.env.BETTER_AUTH_URL ||

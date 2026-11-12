@@ -20,7 +20,9 @@ export function createTRPCCLIENT() {
           (opts.direction === "down" && opts.result instanceof Error),
       }),
       httpLink({
-        url: process.env.NEXT_PUBLIC_API_URL ?? "/api/trpc",
+        // Always use the Next.js proxy route from the browser so auth cookies/CSRF
+        // stay same-origin and the API URL is not exposed to client-side CORS.
+        url: "/api/trpc",
         headers: () => {
           const headers: Record<string, string> = {};
           if (csrfTokenStore) {

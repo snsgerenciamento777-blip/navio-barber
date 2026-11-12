@@ -2,7 +2,8 @@
 
 **Data:** 2026-11-12  
 **Branch:** `main`  
-**HEAD auditado/publicado (antes do commit técnico desta retomada):** `ceff3240befadded464e4bd0ff3818b790acd6b1` (`origin/main` sincronizado).  
+**HEAD atual (após retomada/publicação):** `9ff93a74b2fc3e8c4066734b6eb3ebd87d051a29` (`origin/main` sincronizado).  
+**HEAD anterior auditado:** `ceff3240befadded464e4bd0ff3818b790acd6b1`.  
 **Commit conhecido informado:** `c1aff5a02775bac70cb248c4a09b6517ae7cc075` — **presente no histórico**.
 
 ## 1. O que foi encontrado

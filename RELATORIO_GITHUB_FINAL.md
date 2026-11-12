@@ -31,7 +31,7 @@
 
 ## 5. Commits / Push (resultado real)
 - `ceff3240befadded464e4bd0ff3818b790acd6b1` — push `969af8d..ceff324` para `origin/main` **concluído** (confirmado por `git ls-remote`).
-- Commit técnico desta missão (API prod build + docs/relatórios finais): **criado e publicado nesta retomada** — ver hash e confirmação de sincronização no resumo de entrega desta sessão (registrado após `git push origin main` bem-sucedido).
+- `9ff93a74b2fc3e8c4066734b6eb3ebd87d051a29` (`9ff93a7`) — `chore(api,deploy,docs): add production API dist build and final mission reports` — push para `origin/main` **concluído** nesta retomada; `origin/main` = local `HEAD` = `9ff93a74b2fc3e8c4066734b6eb3ebd87d051a29` (sincronizado).
 
 ## 6. URLs
 - **Repositório:** `https://github.com/snsgerenciamento777-blip/navio-barber`
